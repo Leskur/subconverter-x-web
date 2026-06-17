@@ -89,10 +89,7 @@ export function SettingsPage({ theme, onThemeChange }: SettingsPageProps) {
           <code className="block break-all rounded-md bg-muted px-2.5 py-2">{getPublicApiUrl()}</code>
           <div className="text-muted-foreground space-y-0.5">
             <p>
-              <code className="text-[11px]">VITE_API_BASE</code> — API 请求前缀
-            </p>
-            <p>
-              <code className="text-[11px]">VITE_PUBLIC_API_URL</code> — 订阅链接中的 API 域名
+              <code className="text-[11px]">VITE_API_BASE</code> — 后端 API 地址（留空时使用当前页面 origin）
             </p>
           </div>
         </CardContent>

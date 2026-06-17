@@ -59,12 +59,9 @@ export function RulesPage() {
   async function handleSave() {
     setSaving(true)
     try {
-      const current = await getRules()
       await saveRules({
         rules: stringifyRules(rules).split('\n').filter(Boolean),
-        proxyGroups: current.proxyGroups,
         rulesMerge,
-        proxyGroupsMerge: current.proxyGroupsMerge,
       })
       toast.success('规则已保存')
     } catch (error) {

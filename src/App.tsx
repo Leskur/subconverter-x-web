@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
-import { ProxyGroupsPage } from '@/pages/ProxyGroupsPage'
 import { RulesPage } from '@/pages/RulesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SubscriptionPage } from '@/pages/SubscriptionPage'
@@ -43,8 +42,6 @@ export default function App() {
         return <SubscriptionPage />
       case 'rules':
         return <RulesPage />
-      case 'groups':
-        return <ProxyGroupsPage />
       case 'settings':
         return <SettingsPage theme={theme} onThemeChange={handleThemeChange} />
       default:

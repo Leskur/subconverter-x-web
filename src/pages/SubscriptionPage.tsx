@@ -160,7 +160,6 @@ export function SubscriptionPage() {
                     <Badge variant="secondary">{preview.nodeCount} 个节点</Badge>
                   )}
                   {preview.hasRules && <Badge>含规则</Badge>}
-                  {preview.hasProxyGroups && <Badge variant="outline">含代理组</Badge>}
                 </div>
                 {preview.body && (
                   <div className="relative">

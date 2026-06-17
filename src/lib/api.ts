@@ -47,26 +47,15 @@ export function buildExampleSubscriptionUrl(): string {
 }
 
 export type RulesMergeMode = 'replace' | 'prepend' | 'append'
-export type ProxyGroupsMergeMode = 'replace' | 'merge'
 
 export interface RulesConfig {
   rules: string[]
-  proxyGroups: ProxyGroup[]
   rulesMerge: RulesMergeMode
-  proxyGroupsMerge: ProxyGroupsMergeMode
-}
-
-export interface ProxyGroup {
-  name: string
-  type: string
-  proxies: string[]
 }
 
 export interface RulesInput {
   rules?: string[]
-  proxyGroups?: ProxyGroup[]
   rulesMerge?: RulesMergeMode
-  proxyGroupsMerge?: ProxyGroupsMergeMode
 }
 
 export interface HealthStatus {
@@ -82,7 +71,6 @@ export interface AdminMeta {
 
 export interface RulesSummary {
   ruleCount: number
-  groupCount: number
 }
 
 export interface SubPreviewResult {
@@ -90,7 +78,6 @@ export interface SubPreviewResult {
   body?: string
   nodeCount?: number
   hasRules?: boolean
-  hasProxyGroups?: boolean
   contentType?: string
   error?: string
 }
@@ -136,7 +123,6 @@ export async function getRulesSummary(): Promise<RulesSummary> {
   const rules = await getRules()
   return {
     ruleCount: rules.rules?.length ?? 0,
-    groupCount: rules.proxyGroups?.length ?? 0,
   }
 }
 
@@ -184,7 +170,6 @@ export async function previewSubscription(
       contentType,
       nodeCount,
       hasRules: body.includes('rules:'),
-      hasProxyGroups: body.includes('proxy-groups:'),
     }
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : '请求失败' }

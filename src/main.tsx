@@ -1,4 +1,4 @@
-import { StrictMode, useEffect } from 'react'
+import { /* StrictMode, */ useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Toaster } from 'sonner'
 import App from './App'
@@ -14,9 +14,11 @@ function ThemeInit() {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  // <StrictMode>
+  <>
     <ThemeInit />
     <App />
     <Toaster richColors position="top-right" />
-  </StrictMode>,
+  </>
+  // </StrictMode>
 )
