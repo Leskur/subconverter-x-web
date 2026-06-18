@@ -1,4 +1,4 @@
-export type AdminPage = 'subscription' | 'rules' | 'settings'
+export type AdminPage = 'subscription' | 'rules' | 'templates' | 'settings'
 
 export interface AdminRoute {
   page: AdminPage
@@ -10,6 +10,7 @@ function parseHash(): AdminRoute {
 
   if (page === 'subscription') return { page: 'subscription' }
   if (page === 'rules') return { page: 'rules' }
+  if (page === 'templates') return { page: 'templates' }
   if (page === 'settings') return { page: 'settings' }
   return { page: 'subscription' }
 }
@@ -17,6 +18,7 @@ function parseHash(): AdminRoute {
 export function routeToHash(route: AdminRoute): string {
   if (route.page === 'subscription') return '#/subscription'
   if (route.page === 'rules') return '#/rules'
+  if (route.page === 'templates') return '#/templates'
   return '#/settings'
 }
 

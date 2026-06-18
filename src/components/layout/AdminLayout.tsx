@@ -1,4 +1,4 @@
-import { Link2, ScrollText, Settings } from 'lucide-react'
+import { FileCode2, Link2, ScrollText, Settings } from 'lucide-react'
 import { type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { navigateRoute, type AdminPage, type AdminRoute } from '@/lib/router'
@@ -12,6 +12,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { page: 'subscription', label: '订阅', icon: Link2 },
   { page: 'rules', label: '规则', icon: ScrollText },
+  { page: 'templates', label: '模板', icon: FileCode2 },
   { page: 'settings', label: '设置', icon: Settings },
 ]
 

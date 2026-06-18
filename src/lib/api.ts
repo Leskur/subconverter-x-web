@@ -136,6 +136,30 @@ export async function saveRules(input: RulesInput): Promise<RulesConfig> {
   )
 }
 
+export type TemplateType = 'clash' | 'singbox'
+
+async function handleTextResponse(res: Response): Promise<string> {
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { error?: string }
+    throw new Error(err.error ?? `Request failed (${res.status})`)
+  }
+  return res.text()
+}
+
+export async function getTemplate(type: TemplateType): Promise<string> {
+  return handleTextResponse(await fetch(apiUrl(`/api/templates/${type}`)))
+}
+
+export async function saveTemplate(type: TemplateType, content: string): Promise<void> {
+  await handleTextResponse(
+    await fetch(apiUrl(`/api/templates/${type}`), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', ...authHeaders() },
+      body: content,
+    }),
+  )
+}
+
 export async function previewSubscription(
   upstream: string,
   target: SubTarget = '',
