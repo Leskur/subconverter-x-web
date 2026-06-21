@@ -1,6 +1,6 @@
 import { parse as parseYaml } from 'yaml'
 
-export type SubTarget = '' | 'clash' | 'singbox' | 'surge'
+export type SubTarget = '' | 'clash' | 'singbox' | 'surge' | 'surfboard' | 'loon' | 'quanx'
 
 export interface SubscriptionUrlOptions {
   upstream?: string
