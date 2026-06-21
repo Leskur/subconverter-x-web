@@ -24,6 +24,7 @@ const RULE_TYPES = [
   { value: 'DOMAIN-KEYWORD', label: '域名关键词', placeholder: 'google' },
   { value: 'IP-CIDR', label: 'IP段', placeholder: '192.168.1.0/24' },
   { value: 'GEOIP', label: '国家地区', placeholder: 'CN' },
+  { value: 'RULE-SET', label: '远端规则集', placeholder: 'https://example.com/rules.list' },
   { value: 'MATCH', label: '兜底匹配', placeholder: '' },
 ]
 
@@ -237,6 +238,13 @@ export function parseRules(text: string): Rule[] {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line, index) => {
+      if (line.startsWith('rule-set:')) {
+        const rest = line.slice('rule-set:'.length)
+        const commaIdx = rest.lastIndexOf(',')
+        const url = commaIdx === -1 ? rest : rest.slice(0, commaIdx)
+        const policy = commaIdx === -1 ? 'PROXY' : rest.slice(commaIdx + 1)
+        return { id: String(index), type: 'RULE-SET', content: url, policy }
+      }
       const parts = line.split(',')
       if (parts.length === 2 && parts[0] === 'MATCH') {
         return { id: String(index), type: 'MATCH', content: '', policy: parts[1] }
@@ -257,6 +265,7 @@ export function stringifyRules(rules: Rule[]): string {
   return rules
     .map((r) => {
       if (r.type === 'MATCH') return `MATCH,${r.policy}`
+      if (r.type === 'RULE-SET') return `rule-set:${r.content},${r.policy}`
       return `${r.type},${r.content},${r.policy}`
     })
     .join('\n')
