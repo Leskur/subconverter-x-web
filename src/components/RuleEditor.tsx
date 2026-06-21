@@ -1,5 +1,5 @@
-import { GripVertical, Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { GripVertical, Plus, Trash2, Link } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -19,13 +19,13 @@ export interface Rule {
 }
 
 const RULE_TYPES = [
-  { value: 'DOMAIN', label: '域名', placeholder: 'example.com' },
   { value: 'DOMAIN-SUFFIX', label: '域名后缀', placeholder: 'google.com' },
+  { value: 'DOMAIN', label: '域名', placeholder: 'example.com' },
   { value: 'DOMAIN-KEYWORD', label: '域名关键词', placeholder: 'google' },
-  { value: 'IP-CIDR', label: 'IP段', placeholder: '192.168.1.0/24' },
-  { value: 'GEOIP', label: '国家地区', placeholder: 'CN' },
+  { value: 'GEOIP', label: '国家/地区', placeholder: 'CN' },
+  { value: 'IP-CIDR', label: 'IP 段', placeholder: '192.168.1.0/24' },
   { value: 'RULE-SET', label: '远端规则集', placeholder: 'https://example.com/rules.list' },
-  { value: 'MATCH', label: '兜底匹配', placeholder: '' },
+  { value: 'MATCH', label: '默认策略', placeholder: '' },
 ]
 
 const POLICIES = [
@@ -98,6 +98,9 @@ export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeMode
     setDraggedId(null)
   }
 
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null)
+  const focusRef = useRef<HTMLInputElement>(null)
+
   function addRule() {
     const newRule: Rule = {
       id: crypto.randomUUID(),
@@ -106,7 +109,15 @@ export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeMode
       policy: 'PROXY',
     }
     onChange([...rules, newRule])
+    setLastAddedId(newRule.id)
   }
+
+  useEffect(() => {
+    if (lastAddedId && focusRef.current) {
+      focusRef.current.focus()
+      setLastAddedId(null)
+    }
+  }, [lastAddedId, rules])
 
   return (
     <div className="rounded-md border overflow-hidden">
@@ -146,6 +157,53 @@ export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeMode
           )
         }
 
+        const isRuleSet = rule.type === 'RULE-SET'
+
+        if (isRuleSet) {
+          return (
+            <div
+              key={rule.id}
+              draggable
+              onDragStart={() => handleDragStart(rule.id)}
+              onDragOver={(e) => handleDragOver(e, rule.id)}
+              onDragEnd={handleDragEnd}
+              className={`grid grid-cols-[32px_1fr_120px_40px] gap-2 px-3 py-2.5 border-t items-center hover:bg-accent/20 cursor-move min-h-[52px] ${draggedId ? '[&>*]:pointer-events-none' : ''}`}
+            >
+              <div className="cursor-grab active:cursor-grabbing">
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="shrink-0 rounded px-1.5 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400 flex items-center gap-1">
+                  <Link className="h-3 w-3" />
+                  远端规则集
+                </span>
+                <Input
+                  value={rule.content}
+                  onChange={(e) => updateRule(rule.id, { content: e.target.value })}
+                  placeholder="https://example.com/rules.list"
+                  className="h-8 text-xs font-mono"
+                />
+              </div>
+              <Input
+                value={rule.policy}
+                onChange={(e) => updateRule(rule.id, { policy: e.target.value })}
+                placeholder="PROXY"
+                className="h-8 text-xs"
+              />
+              <div className="flex justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 hover:text-destructive"
+                  onClick={() => deleteRule(rule.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )
+        }
+
         return (
           <div
             key={rule.id}
@@ -179,6 +237,7 @@ export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeMode
               <span className="text-xs text-muted-foreground">—</span>
             ) : (
               <Input
+                ref={rule.id === lastAddedId ? focusRef : undefined}
                 value={rule.content}
                 onChange={(e) => updateRule(rule.id, { content: e.target.value })}
                 placeholder={typeInfo?.placeholder}
@@ -214,6 +273,14 @@ export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeMode
           </div>
         )
       })}
+
+      {/* 空状态 */}
+      {displayRules.length === 0 && (
+        <div className="border-t px-3 py-8 text-center">
+          <p className="text-sm text-muted-foreground">还没有规则</p>
+          <p className="text-xs text-muted-foreground mt-1">点击「添加规则」手动输入，或从「规则集」快速导入</p>
+        </div>
+      )}
 
       {/* 添加行 */}
       <div className="border-t px-3 py-2 bg-muted/30">

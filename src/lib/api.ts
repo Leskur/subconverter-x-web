@@ -130,6 +130,29 @@ export async function getRulesSummary(): Promise<RulesSummary> {
   }
 }
 
+export interface CustomRuleset {
+  id: string
+  name: string
+  rules: { type: string; content: string; policy: string }[]
+  createdAt: number
+}
+
+export async function getCustomRulesets(): Promise<CustomRuleset[]> {
+  return handleResponse<CustomRuleset[]>(
+    await fetch(apiUrl('/api/rulesets'), { headers: authHeaders() }),
+  )
+}
+
+export async function saveCustomRulesets(rulesets: CustomRuleset[]): Promise<CustomRuleset[]> {
+  return handleResponse<CustomRuleset[]>(
+    await fetch(apiUrl('/api/rulesets'), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(rulesets),
+    }),
+  )
+}
+
 export async function saveRules(input: RulesInput): Promise<RulesConfig> {
   return handleResponse<RulesConfig>(
     await fetch(apiUrl('/api/rules'), {
