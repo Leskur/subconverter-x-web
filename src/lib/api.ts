@@ -1,3 +1,5 @@
+import { parse as parseYaml } from 'yaml'
+
 export type SubTarget = '' | 'clash' | 'singbox' | 'surge'
 
 export interface SubscriptionUrlOptions {
@@ -30,7 +32,7 @@ export function buildSubscriptionUrl(options: SubscriptionUrlOptions = {}): stri
 
   if (!upstream) {
     const targetPart = options.target ? `&target=${encodeURIComponent(options.target)}` : ''
-    return `${base}/sub?url=<upstream>${targetPart}`
+    return `${base}/sub?url=<订阅链接>${targetPart}`
   }
 
   const params = new URLSearchParams()
@@ -77,7 +79,9 @@ export interface SubPreviewResult {
   ok: boolean
   body?: string
   nodeCount?: number
-  hasRules?: boolean
+  groupCount?: number
+  ruleCount?: number
+  format?: 'clash' | 'singbox' | 'surge' | 'unknown'
   contentType?: string
   error?: string
 }
@@ -150,6 +154,10 @@ export async function getTemplate(type: TemplateType): Promise<string> {
   return handleTextResponse(await fetch(apiUrl(`/api/templates/${type}`)))
 }
 
+export async function getTemplateDefault(type: TemplateType): Promise<string> {
+  return handleTextResponse(await fetch(apiUrl(`/api/templates/${type}/default`)))
+}
+
 export async function saveTemplate(type: TemplateType, content: string): Promise<void> {
   await handleTextResponse(
     await fetch(apiUrl(`/api/templates/${type}`), {
@@ -169,7 +177,7 @@ export async function previewSubscription(
   }
 
   const url = buildSubscriptionUrl({ upstream, target })
-  if (url.includes('<upstream>')) {
+  if (url.includes('<订阅链接>')) {
     return { ok: false, error: '请填写机场订阅链接' }
   }
 
@@ -185,15 +193,45 @@ export async function previewSubscription(
 
     const body = await res.text()
     const contentType = res.headers.get('content-type') ?? ''
-    const isYaml = contentType.includes('yaml') || body.includes('proxies:')
-    const nodeCount = isYaml ? (body.match(/^\s+-\s+name:/gm)?.length ?? 0) : undefined
+    const isJson = contentType.includes('json') || body.trimStart().startsWith('{')
+    const isYaml = !isJson && (contentType.includes('yaml') || body.includes('proxies:'))
+    const isSurge = !isJson && !isYaml && body.includes('[Proxy]')
+
+    let format: SubPreviewResult['format'] = 'unknown'
+    let nodeCount: number | undefined
+    let groupCount: number | undefined
+    let ruleCount: number | undefined
+
+    if (isJson) {
+      format = 'singbox'
+      try {
+        const json = JSON.parse(body) as { outbounds?: unknown[] }
+        nodeCount = json.outbounds?.filter((o) => {
+          const t = (o as Record<string, unknown>).type
+          return typeof t === 'string' && !['selector', 'urltest', 'direct', 'block', 'dns'].includes(t)
+        }).length
+      } catch { /* ignore */ }
+    } else if (isYaml) {
+      format = 'clash'
+      try {
+        const doc = parseYaml(body) as Record<string, unknown>
+        nodeCount = Array.isArray(doc['proxies']) ? (doc['proxies'] as unknown[]).length : undefined
+        groupCount = Array.isArray(doc['proxy-groups']) ? (doc['proxy-groups'] as unknown[]).length : undefined
+        ruleCount = Array.isArray(doc['rules']) ? (doc['rules'] as unknown[]).length : undefined
+      } catch { /* ignore */ }
+    } else if (isSurge) {
+      format = 'surge'
+      nodeCount = body.match(/^\[Proxy\]\n([\s\S]*?)(?=^\[|\Z)/m)?.[0].split('\n').filter(l => l.trim() && !l.startsWith('[') && !l.startsWith('#')).length
+    }
 
     return {
       ok: true,
       body,
       contentType,
+      format,
       nodeCount,
-      hasRules: body.includes('rules:'),
+      groupCount,
+      ruleCount,
     }
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : '请求失败' }

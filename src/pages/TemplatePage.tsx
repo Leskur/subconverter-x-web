@@ -1,19 +1,33 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Loader2, Save, RotateCcw } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Loader2, Save, RotateCcw, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { getTemplate, saveTemplate, type TemplateType } from '@/lib/api'
+import { parse as parseYaml } from 'yaml'
+import { getTemplate, getTemplateDefault, saveTemplate, type TemplateType } from '@/lib/api'
 
-function TemplateEditor({ type }: { type: TemplateType }) {
+function TemplateEditor({ type, onDirtyChange }: { type: TemplateType; onDirtyChange?: (dirty: boolean) => void }) {
   const [content, setContent] = useState('')
   const [original, setOriginal] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const isDirty = content !== original
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+  }, [isDirty, onDirtyChange])
+
+  function adjustHeight() {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.max(el.scrollHeight, 300)}px`
+  }
 
   const fetchTemplate = useCallback(async () => {
     setLoading(true)
@@ -32,7 +46,22 @@ function TemplateEditor({ type }: { type: TemplateType }) {
     fetchTemplate()
   }, [fetchTemplate])
 
+  useEffect(() => {
+    if (!loading) adjustHeight()
+  }, [loading])
+
   async function handleSave() {
+    if (type === 'singbox') {
+      try { JSON.parse(content) } catch {
+        toast.error('JSON 格式错误，请检查后保存')
+        return
+      }
+    } else {
+      try { parseYaml(content) } catch {
+        toast.error('YAML 格式错误，请检查后保存')
+        return
+      }
+    }
     setSaving(true)
     try {
       await saveTemplate(type, content)
@@ -45,9 +74,22 @@ function TemplateEditor({ type }: { type: TemplateType }) {
     }
   }
 
-  function handleReset() {
+  function handleRevert() {
     setContent(original)
     toast('已还原到上次保存的内容')
+  }
+
+  async function handleResetDefault() {
+    setResetting(true)
+    try {
+      const text = await getTemplateDefault(type)
+      setContent(text)
+      toast('已加载内置默认模板，保存后生效')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '加载失败')
+    } finally {
+      setResetting(false)
+    }
   }
 
   const lang = type === 'singbox' ? 'JSON' : 'YAML'
@@ -62,8 +104,12 @@ function TemplateEditor({ type }: { type: TemplateType }) {
           {isDirty && <Badge>未保存</Badge>}
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleReset} disabled={saving || !isDirty}>
-            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+          <Button variant="outline" size="sm" onClick={handleResetDefault} disabled={saving || resetting}>
+            {resetting ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="mr-1.5 h-3.5 w-3.5" />}
+            恢复默认
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleRevert} disabled={saving || !isDirty}>
+            <Undo2 className="mr-1.5 h-3.5 w-3.5" />
             还原
           </Button>
           <Button size="sm" onClick={handleSave} disabled={saving || !isDirty}>
@@ -79,10 +125,12 @@ function TemplateEditor({ type }: { type: TemplateType }) {
         </div>
       ) : (
         <textarea
-          className="w-full rounded-md border bg-muted/30 p-3 font-mono text-xs leading-relaxed outline-none focus:ring-2 focus:ring-ring"
-          rows={28}
+          ref={textareaRef}
+          className="w-full resize-none rounded-md border bg-muted/30 p-3 font-mono text-xs leading-relaxed outline-none focus:ring-2 focus:ring-ring"
+          style={{ minHeight: 300 }}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => { setContent(e.target.value); adjustHeight() }}
+          onInput={adjustHeight}
           spellCheck={false}
         />
       )}
@@ -91,6 +139,16 @@ function TemplateEditor({ type }: { type: TemplateType }) {
 }
 
 export function TemplatePage() {
+  const [activeTab, setActiveTab] = useState<string>('clash')
+  const dirtyRef = useRef<Record<string, boolean>>({})
+
+  function handleTabChange(value: string) {
+    if (dirtyRef.current[activeTab]) {
+      toast('当前标签有未保存的改动')
+    }
+    setActiveTab(value)
+  }
+
   return (
     <div className="space-y-5">
       <div>
@@ -110,16 +168,16 @@ export function TemplatePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="clash">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-4">
               <TabsTrigger value="clash">Clash / Mihomo</TabsTrigger>
               <TabsTrigger value="singbox">sing-box</TabsTrigger>
             </TabsList>
             <TabsContent value="clash">
-              <TemplateEditor type="clash" />
+              <TemplateEditor type="clash" onDirtyChange={(d) => { dirtyRef.current['clash'] = d }} />
             </TabsContent>
             <TabsContent value="singbox">
-              <TemplateEditor type="singbox" />
+              <TemplateEditor type="singbox" onDirtyChange={(d) => { dirtyRef.current['singbox'] = d }} />
             </TabsContent>
           </Tabs>
         </CardContent>

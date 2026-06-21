@@ -139,7 +139,7 @@ export function SubscriptionPage() {
             </Button>
             <Button variant="outline" className="shrink-0 sm:w-28" disabled={!canUse || testing} onClick={() => handleTest()}>
               {testing ? <Loader2 className="animate-spin" /> : <Play />}
-              测试拉取
+              测试
             </Button>
           </div>
         </CardContent>
@@ -156,10 +156,18 @@ export function SubscriptionPage() {
               <>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium text-green-600">拉取成功</span>
+                  {preview.format && preview.format !== 'unknown' && (
+                    <Badge variant="outline" className="font-mono">{preview.format}</Badge>
+                  )}
                   {preview.nodeCount !== undefined && (
                     <Badge variant="secondary">{preview.nodeCount} 个节点</Badge>
                   )}
-                  {preview.hasRules && <Badge>含规则</Badge>}
+                  {preview.groupCount !== undefined && (
+                    <Badge variant="secondary">{preview.groupCount} 个代理组</Badge>
+                  )}
+                  {preview.ruleCount !== undefined && (
+                    <Badge variant="secondary">{preview.ruleCount} 条规则</Badge>
+                  )}
                 </div>
                 {preview.body && (
                   <div className="relative">
