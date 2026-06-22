@@ -1,49 +1,49 @@
 # subconverter-x-web
 
-Admin UI for [subconverter-x](https://github.com/Leskur/subconverter-x) — built with React + Vite + shadcn/ui.
+[subconverter-x](https://github.com/Leskur/subconverter-x) 的管理前端，基于 React + Vite + shadcn/ui 构建。
 
-## Development
+## 开发
 
 ```bash
 npm install
 npm run dev
 ```
 
-By default, API requests are proxied to `http://127.0.0.1:3000`. Start the backend first:
+默认将 API 请求代理到 `http://127.0.0.1:3000`，需先启动后端：
 
 ```bash
-# in the scx repo
+# 在后端仓库目录
 npm run dev
 ```
 
-## Environment Variables
+## 环境变量
 
-| Variable | Description | Example |
+| 变量 | 说明 | 示例 |
 |---|---|---|
-| `VITE_API_BASE` | Backend API base URL. Required when frontend and backend are on different origins. | `https://api.example.com` |
+| `VITE_API_BASE` | 后端 API 地址。前后端分离部署时必须设置。 | `https://api.example.com` |
 
-Create a `.env.local` file in this directory to set variables for local development:
+本地开发时在项目根目录创建 `.env.local`：
 
 ```
 VITE_API_BASE=http://127.0.0.1:3000
 ```
 
-## Build
+## 构建
 
 ```bash
 npm run build
-# output: dist/
+# 产物目录：dist/
 ```
 
-Deploy `dist/` to any static hosting (Cloudflare Pages, Vercel, Nginx, etc.).
+`dist/` 可部署到任意静态托管平台（Cloudflare Pages、Vercel、Nginx 等）。
 
-## Deployment (Cloudflare Pages)
+## 部署（Cloudflare Pages）
 
 1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com) → Workers & Pages → Create application → Pages → Connect to Git
 2. 选择本仓库，配置如下：
-   - **Build command**: `npm run build`
-   - **Output directory**: `dist`
-   - **Environment variable**: `VITE_API_BASE=https://your-backend-domain`
+   - **构建命令**：`npm run build`
+   - **输出目录**：`dist`
+   - **环境变量**：`VITE_API_BASE=https://your-backend-domain`
 3. 点击 Save and Deploy，后续 push 到 main 自动部署
 
 > 也可用 Wrangler CLI：`npx wrangler pages deploy dist --project-name=subconverter-x`
