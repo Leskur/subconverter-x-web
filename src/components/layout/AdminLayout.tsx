@@ -1,7 +1,8 @@
-import { Link2, ScrollText, Settings } from 'lucide-react'
-import { type ReactNode } from 'react'
+import { Github, Link2, ScrollText, Settings } from 'lucide-react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { navigateRoute, type AdminPage, type AdminRoute } from '@/lib/router'
+import { getAdminMeta, type AdminMeta } from '@/lib/api'
 
 interface NavItem {
   page: AdminPage
@@ -21,6 +22,12 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ route, children }: AdminLayoutProps) {
+  const [meta, setMeta] = useState<AdminMeta | null>(null)
+
+  useEffect(() => {
+    getAdminMeta().then(setMeta).catch(() => {})
+  }, [])
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-10 border-b bg-card">
@@ -54,6 +61,26 @@ export function AdminLayout({ route, children }: AdminLayoutProps) {
       <main className="flex-1 p-4 md:p-5">
         <div className="mx-auto w-full max-w-5xl">{children}</div>
       </main>
+
+      <footer className="border-t bg-card py-3">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-start px-4 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-2">
+            <a
+              href="https://github.com/Leskur/subconverter-x"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-foreground flex items-center gap-1"
+            >
+              <Github className="h-4 w-4" />
+              GitHub
+            </a>
+            <span>·</span>
+            Web v{__APP_VERSION__}
+            <span>·</span>
+            API {meta ? `v${meta.version}` : '—'}
+          </span>
+        </div>
+      </footer>
     </div>
   )
 }

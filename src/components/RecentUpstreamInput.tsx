@@ -83,9 +83,21 @@ export function RecentUpstreamInput({
           if (e.key === 'Escape') setOpen(false)
         }}
         placeholder={placeholder}
-        className="font-mono text-sm"
+        className="font-mono text-sm pr-8"
         autoComplete="off"
       />
+      {value && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="absolute right-0.5 top-1/2 -translate-y-1/2 h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+          title="清空"
+          onClick={() => onChange('')}
+        >
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      )}
 
       {open && recent.length > 0 && (
         <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md">

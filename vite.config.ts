@@ -1,27 +1,20 @@
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
+
+const pkg = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'))
 
 export default defineConfig(() => {
   return {
     base: '/',
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+    },
     plugins: [react()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-      },
-    },
-    server: {
-      port: 5173,
-      proxy: {
-        '/api': {
-          target: 'http://127.0.0.1:3000',
-          changeOrigin: true,
-        },
-        '/health': {
-          target: 'http://127.0.0.1:3000',
-          changeOrigin: true,
-        },
       },
     },
     build: {
