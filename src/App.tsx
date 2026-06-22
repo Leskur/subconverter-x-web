@@ -3,7 +3,6 @@ import { AdminLayout } from '@/components/layout/AdminLayout'
 import { RulesPage } from '@/pages/RulesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SubscriptionPage } from '@/pages/SubscriptionPage'
-import { TemplatePage } from '@/pages/TemplatePage'
 import { getInitialRoute, subscribeRoute, type AdminRoute } from '@/lib/router'
 
 type ThemeMode = 'light' | 'dark' | 'system'
@@ -43,8 +42,6 @@ export default function App() {
         return <SubscriptionPage />
       case 'rules':
         return <RulesPage />
-      case 'templates':
-        return <TemplatePage />
       case 'settings':
         return <SettingsPage theme={theme} onThemeChange={handleThemeChange} />
       default:

@@ -208,7 +208,7 @@ export function RulesPage() {
               {isDirty && <Badge variant="outline" className="text-xs text-amber-600 border-amber-400">未保存</Badge>}
             </div>
             <CardDescription className="text-xs">
-              拖拽调整顺序，直接编辑各字段；策略名称需与「代理组」页一致
+              拖拽调整顺序，直接编辑各字段；策略名称需与代理组名称一致
             </CardDescription>
           </div>
           <div className="flex gap-2">

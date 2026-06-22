@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Layers, Link2, Pencil, RefreshCw, ScrollText } from 'lucide-react'
+import { Link2, Pencil, RefreshCw, ScrollText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -76,14 +76,6 @@ export function DashboardPage() {
 
         <Card>
           <CardHeader className="p-4 pb-1">
-            <CardDescription className="text-xs">代理组</CardDescription>
-            <CardTitle className="text-2xl">{summary?.groupCount ?? '—'}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 text-xs text-muted-foreground">个</CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="p-4 pb-1">
             <CardDescription className="text-xs">鉴权</CardDescription>
             <CardTitle className="text-base">{meta?.authEnabled ? '已启用' : '未启用'}</CardTitle>
           </CardHeader>
@@ -103,11 +95,6 @@ export function DashboardPage() {
             <ScrollText />
             规则
             {summary ? ` (${summary.ruleCount})` : ''}
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => navigateRoute({ page: 'groups' })}>
-            <Layers />
-            代理组
-            {summary ? ` (${summary.groupCount})` : ''}
           </Button>
           <Button size="sm" variant="outline" onClick={() => navigateRoute({ page: 'settings' })}>
             <Pencil />

@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { getPublicApiUrl } from '@/lib/api'
+import { getAdminMeta, getPublicApiUrl } from '@/lib/api'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -21,14 +21,30 @@ interface SettingsPageProps {
 
 export function SettingsPage({ theme, onThemeChange }: SettingsPageProps) {
   const [adminToken, setAdminToken] = useState(() => localStorage.getItem('admin_token') ?? '')
+  const [tokenStatus, setTokenStatus] = useState<'idle' | 'ok' | 'mismatch' | 'no-auth'>('idle')
 
-  function saveToken() {
+  async function saveToken() {
     if (adminToken.trim()) {
       localStorage.setItem('admin_token', adminToken.trim())
     } else {
       localStorage.removeItem('admin_token')
     }
-    toast.success('Token 已保存到本地')
+
+    try {
+      const meta = await getAdminMeta()
+      if (!meta.authEnabled) {
+        localStorage.removeItem('admin_token')
+        setAdminToken('')
+        setTokenStatus('no-auth')
+        toast('服务端未启用鉴权，Token 已清除')
+      } else {
+        setTokenStatus('ok')
+        toast.success('Token 已保存，鉴权正常')
+      }
+    } catch {
+      setTokenStatus('mismatch')
+      toast.error('Token 可能不正确，鉴权失败')
+    }
   }
 
   return (
@@ -77,13 +93,22 @@ export function SettingsPage({ theme, onThemeChange }: SettingsPageProps) {
               保存
             </Button>
           </div>
+          {tokenStatus === 'ok' && (
+            <p className="text-xs text-green-600">鉴权正常</p>
+          )}
+          {tokenStatus === 'mismatch' && (
+            <p className="text-xs text-destructive">Token 不正确，鉴权失败</p>
+          )}
+          {tokenStatus === 'no-auth' && (
+            <p className="text-xs text-muted-foreground">服务端未启用鉴权，无需配置 Token</p>
+          )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3">
           <CardTitle className="text-base">连接信息</CardTitle>
-          <CardDescription className="text-xs">当前端和后端分开部署时，需要配置以下环境变量</CardDescription>
+          <CardDescription className="text-xs">前端请求后端 API 时使用的地址，通过 <code className="text-[11px]">VITE_API_BASE</code> 环境变量配置（留空时使用当前页面地址）</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 p-4 pt-0 text-xs sm:p-5 sm:pt-0">
           <code className="block break-all rounded-md bg-muted px-2.5 py-2">{getPublicApiUrl()}</code>
