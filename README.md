@@ -39,6 +39,11 @@ Deploy `dist/` to any static hosting (Cloudflare Pages, Vercel, Nginx, etc.).
 
 ## Deployment (Cloudflare Pages)
 
-- Build command: `npm run build`
-- Output directory: `dist`
-- Environment variable: `VITE_API_BASE=https://your-backend-domain`
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com) → Workers & Pages → Create application → Pages → Connect to Git
+2. 选择本仓库，配置如下：
+   - **Build command**: `npm run build`
+   - **Output directory**: `dist`
+   - **Environment variable**: `VITE_API_BASE=https://your-backend-domain`
+3. 点击 Save and Deploy，后续 push 到 main 自动部署
+
+> 也可用 Wrangler CLI：`npx wrangler pages deploy dist --project-name=subconverter-x`
