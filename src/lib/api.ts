@@ -163,6 +163,21 @@ export async function saveRules(input: RulesInput): Promise<RulesConfig> {
   )
 }
 
+export async function getRulesDefault(): Promise<RulesConfig> {
+  return handleResponse<RulesConfig>(
+    await fetch(apiUrl('/api/rules/default'), { headers: authHeaders() }),
+  )
+}
+
+export async function resetRules(): Promise<RulesConfig> {
+  return handleResponse<RulesConfig>(
+    await fetch(apiUrl('/api/rules/reset'), {
+      method: 'POST',
+      headers: authHeaders(),
+    }),
+  )
+}
+
 export async function previewSubscription(
   upstream: string,
   target: SubTarget = '',

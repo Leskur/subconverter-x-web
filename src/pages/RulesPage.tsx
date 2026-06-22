@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import { getRules, saveRules, getCustomRulesets, saveCustomRulesets, type RulesMergeMode, type CustomRuleset } from '@/lib/api'
+import { getRules, saveRules, resetRules, getCustomRulesets, saveCustomRulesets, type RulesMergeMode, type CustomRuleset } from '@/lib/api'
 
 const PRESET_RULESETS: { label: string; desc: string; url: string; policy: string }[] = [
   {
@@ -197,6 +197,20 @@ export function RulesPage() {
     }
   }
 
+  async function handleResetToDefault() {
+    try {
+      const config = await resetRules()
+      const parsed = parseRules((config.rules ?? []).join('\n'))
+      setRules(parsed)
+      setSavedRules(parsed)
+      setRulesMerge(config.rulesMerge ?? 'replace')
+      setSavedMerge(config.rulesMerge ?? 'replace')
+      toast.success('已恢复默认规则')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '恢复失败')
+    }
+  }
+
   return (
     <div className="space-y-4">
       <Card>
@@ -294,6 +308,9 @@ export function RulesPage() {
             </Button>
             <Button variant="outline" size="sm" title="还原修改" disabled={!isDirty} onClick={handleRevert}>
               <RotateCcw className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" title="恢复默认规则" onClick={handleResetToDefault}>
+              恢复默认
             </Button>
             <Button
               size="sm"
