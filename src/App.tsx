@@ -3,7 +3,8 @@ import { AdminLayout } from '@/components/layout/AdminLayout'
 import { RulesPage } from '@/pages/RulesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SubscriptionPage } from '@/pages/SubscriptionPage'
-import { getInitialRoute, subscribeRoute, type AdminRoute } from '@/lib/router'
+import { getInitialRoute, subscribeRoute, navigateRoute, type AdminRoute } from '@/lib/router'
+import { getActiveBackend } from '@/lib/backends'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -20,6 +21,12 @@ export default function App() {
   )
 
   useEffect(() => subscribeRoute(setRoute), [])
+
+  useEffect(() => {
+    if (!getActiveBackend()) {
+      navigateRoute({ page: 'settings' })
+    }
+  }, [])
 
   useEffect(() => {
     applyTheme(theme)

@@ -1,5 +1,6 @@
 import { GripVertical, Plus, Trash2, Link } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { uuid } from '@/lib/uuid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -103,7 +104,7 @@ export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeMode
 
   function addRule() {
     const newRule: Rule = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       type: 'DOMAIN-SUFFIX',
       content: '',
       policy: 'PROXY',

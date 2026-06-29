@@ -1,4 +1,5 @@
 import { parse as parseYaml } from 'yaml'
+import { getApiBase, getActiveToken } from './backends'
 
 export type SubTarget = '' | 'clash' | 'singbox' | 'surge' | 'surfboard' | 'loon' | 'quanx'
 
@@ -86,20 +87,16 @@ export interface SubPreviewResult {
   error?: string
 }
 
-const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '')
-
 export function getPublicApiUrl(): string {
-  if (API_BASE) return API_BASE
-  if (typeof window !== 'undefined') return window.location.origin
-  return ''
+  return getApiBase()
 }
 
 function apiUrl(path: string): string {
-  return `${API_BASE}${path}`
+  return `${getApiBase()}${path}`
 }
 
 function authHeaders(): HeadersInit {
-  const token = localStorage.getItem('admin_token')
+  const token = getActiveToken() ?? localStorage.getItem('admin_token')
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 

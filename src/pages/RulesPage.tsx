@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2, Save, RotateCcw, ListPlus, Check, Bookmark } from 'lucide-react'
 import { toast } from 'sonner'
+import { uuid } from '@/lib/uuid'
 import { RuleEditor, parseRules, stringifyRules, type Rule } from '@/components/RuleEditor'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -96,7 +97,7 @@ export function RulesPage() {
       const existing = new Set(prev.map((r) => `${r.type}:${r.content}`))
       const toAdd = preset.rules
         .filter((r) => !existing.has(`${r.type}:${r.content}`))
-        .map((r) => ({ ...r, id: crypto.randomUUID() }))
+        .map((r) => ({ ...r, id: uuid() }))
       const matchIdx = prev.findIndex((r) => r.type === 'MATCH')
       if (matchIdx === -1) return [...prev, ...toAdd]
       return [...prev.slice(0, matchIdx), ...toAdd, ...prev.slice(matchIdx)]
@@ -108,7 +109,7 @@ export function RulesPage() {
     const name = savingName.trim()
     if (!name) return
     const newEntry: CustomRuleset = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       name,
       rules: rules.filter((r) => r.type !== 'MATCH').map(({ type, content, policy }) => ({ type, content, policy })),
       createdAt: Date.now(),
@@ -137,7 +138,7 @@ export function RulesPage() {
 
   function insertRuleset(url: string, policy: string) {
     if (addedUrls.has(url)) return
-    const newRule: Rule = { id: crypto.randomUUID(), type: 'RULE-SET', content: url, policy }
+    const newRule: Rule = { id: uuid(), type: 'RULE-SET', content: url, policy }
     setRules((prev) => {
       const matchIdx = prev.findIndex((r) => r.type === 'MATCH')
       if (matchIdx === -1) return [...prev, newRule]

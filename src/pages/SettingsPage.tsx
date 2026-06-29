@@ -1,10 +1,20 @@
 import { useState } from 'react'
-import { Monitor, Moon, Sun } from 'lucide-react'
+import { Monitor, Moon, Sun, Plus, Trash2, Check, Server } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { getAdminMeta, getPublicApiUrl } from '@/lib/api'
+import { Label } from '@/components/ui/label'
+import {
+  type BackendConfig,
+  getBackends,
+  addBackend,
+  updateBackend,
+  removeBackend,
+  getActiveBackendId,
+  setActiveBackendId,
+} from '@/lib/backends'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -19,36 +29,76 @@ interface SettingsPageProps {
   onThemeChange: (mode: ThemeMode) => void
 }
 
+const emptyForm = { protocol: 'http' as 'http' | 'https', host: '', port: '', token: '' }
+
 export function SettingsPage({ theme, onThemeChange }: SettingsPageProps) {
-  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('admin_token') ?? '')
-  const [tokenStatus, setTokenStatus] = useState<'idle' | 'ok' | 'mismatch' | 'no-auth'>('idle')
+  const [backends, setBackends] = useState<BackendConfig[]>(() => getBackends())
+  const [activeId, setActiveId] = useState<string | null>(() => getActiveBackendId())
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [form, setForm] = useState(emptyForm)
 
-  async function saveToken() {
-    if (adminToken.trim()) {
-      localStorage.setItem('admin_token', adminToken.trim())
+  function refresh() {
+    setBackends(getBackends())
+    setActiveId(getActiveBackendId())
+  }
+
+  function openAdd() {
+    setEditingId(null)
+    setForm(emptyForm)
+    setDialogOpen(true)
+  }
+
+  function openEdit(backend: BackendConfig) {
+    setEditingId(backend.id)
+    setForm({
+      protocol: backend.protocol,
+      host: backend.host,
+      port: String(backend.port),
+      token: backend.token,
+    })
+    setDialogOpen(true)
+  }
+
+  function handleSave() {
+    if (!form.host.trim()) {
+      toast.error('请填写后端地址')
+      return
+    }
+    const data = {
+      name: `${form.protocol}://${form.host.trim()}:${form.port}`,
+      protocol: form.protocol,
+      host: form.host.trim(),
+      port: Number(form.port) || 15500,
+      token: form.token.trim(),
+    }
+    if (editingId) {
+      updateBackend(editingId, data)
+      toast.success('后端已更新')
     } else {
-      localStorage.removeItem('admin_token')
+      addBackend(data)
+      toast.success('后端已添加')
     }
+    setDialogOpen(false)
+    setForm(emptyForm)
+    setEditingId(null)
+    refresh()
+  }
 
-    try {
-      const meta = await getAdminMeta()
-      if (!meta.authEnabled) {
-        localStorage.removeItem('admin_token')
-        setAdminToken('')
-        setTokenStatus('no-auth')
-        toast('服务端未启用鉴权，Token 已清除')
-      } else {
-        setTokenStatus('ok')
-        toast.success('Token 已保存，鉴权正常')
-      }
-    } catch {
-      setTokenStatus('mismatch')
-      toast.error('Token 可能不正确，鉴权失败')
-    }
+  function handleRemove(id: string) {
+    removeBackend(id)
+    refresh()
+    toast.success('后端已删除')
+  }
+
+  function handleSwitch(id: string) {
+    setActiveBackendId(id)
+    refresh()
+    toast.success('后端已切换')
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid gap-4 sm:grid-cols-2">
       <Card>
         <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3">
           <CardTitle className="text-base">主题</CardTitle>
@@ -74,51 +124,137 @@ export function SettingsPage({ theme, onThemeChange }: SettingsPageProps) {
 
       <Card>
         <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3">
-          <CardTitle className="text-base">Admin Token</CardTitle>
-          <CardDescription className="text-xs">
-            对应服务端的 <code className="text-[11px]">ADMIN_TOKEN</code>，仅存在浏览器本地，不上传到任何地方
-          </CardDescription>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Server className="h-4 w-4" />
+            后端管理
+          </CardTitle>
+          <CardDescription className="text-xs">添加、切换、删除后端服务地址</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 p-4 pt-0 sm:p-5 sm:pt-0">
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              id="admin-token"
-              type="password"
-              value={adminToken}
-              onChange={(e) => setAdminToken(e.target.value)}
-              placeholder="留空表示未配置鉴权"
-              className="min-w-0 flex-1"
-            />
-            <Button variant="secondary" className="shrink-0 sm:w-28" onClick={saveToken}>
-              保存
-            </Button>
-          </div>
-          {tokenStatus === 'ok' && (
-            <p className="text-xs text-green-600">鉴权正常</p>
+          {backends.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">当前后端</Label>
+              <select
+                value={activeId ?? ''}
+                onChange={(e) => handleSwitch(e.target.value)}
+                className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+              >
+                {backends.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.protocol}://{b.host}:{b.port}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
-          {tokenStatus === 'mismatch' && (
-            <p className="text-xs text-destructive">Token 不正确，鉴权失败</p>
+
+          {backends.length === 0 && (
+            <p className="text-muted-foreground text-xs">尚未添加后端，点击下方按钮添加</p>
           )}
-          {tokenStatus === 'no-auth' && (
-            <p className="text-xs text-muted-foreground">服务端未启用鉴权，无需配置 Token</p>
-          )}
+
+          {backends.map((backend) => (
+            <div
+              key={backend.id}
+              className="flex items-center gap-2 rounded-lg border p-2"
+              data-active={activeId === backend.id}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    {backend.protocol}://{backend.host}:{backend.port}
+                  </span>
+                  {activeId === backend.id && (
+                    <Check className="h-3.5 w-3.5 shrink-0 text-green-600" />
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0"
+                onClick={() => openEdit(backend)}
+              >
+                编辑
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0 text-destructive"
+                onClick={() => handleRemove(backend.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-1.5"
+            onClick={openAdd}
+          >
+            <Plus className="h-4 w-4" />
+            添加后端
+          </Button>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3">
-          <CardTitle className="text-base">连接信息</CardTitle>
-          <CardDescription className="text-xs">前端请求后端 API 时使用的地址，通过 <code className="text-[11px]">VITE_API_BASE</code> 环境变量配置（留空时使用当前页面地址）</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 p-4 pt-0 text-xs sm:p-5 sm:pt-0">
-          <code className="block break-all rounded-md bg-muted px-2.5 py-2">{getPublicApiUrl()}</code>
-          <div className="text-muted-foreground space-y-0.5">
-            <p>
-              <code className="text-[11px]">VITE_API_BASE</code> — 后端 API 地址（留空时使用当前页面 origin）
-            </p>
+      <Dialog open={dialogOpen} onOpenChange={(v) => { setDialogOpen(v); if (!v) { setEditingId(null); setForm(emptyForm) } }}>
+        <DialogContent className="max-w-lg w-[95vw]">
+          <DialogHeader>
+            <DialogTitle>{editingId ? '编辑后端' : '添加后端'}</DialogTitle>
+            <DialogDescription>配置后端服务地址和鉴权信息</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <div className="w-24 shrink-0 space-y-1.5">
+                <Label className="text-xs">协议</Label>
+                <select
+                  value={form.protocol}
+                  onChange={(e) => setForm({ ...form, protocol: e.target.value as 'http' | 'https' })}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="http">HTTP</option>
+                  <option value="https">HTTPS</option>
+                </select>
+              </div>
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Label className="text-xs">地址</Label>
+                <Input
+                  value={form.host}
+                  onChange={(e) => setForm({ ...form, host: e.target.value })}
+                  placeholder="192.168.1.1"
+                />
+              </div>
+              <div className="w-20 shrink-0 space-y-1.5">
+                <Label className="text-xs">端口</Label>
+                <Input
+                  value={form.port}
+                  onChange={(e) => setForm({ ...form, port: e.target.value })}
+                  placeholder="15500"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">授权 Token（可选）</Label>
+              <Input
+                type="password"
+                value={form.token}
+                onChange={(e) => setForm({ ...form, token: e.target.value })}
+                placeholder="留空表示无鉴权"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => { setDialogOpen(false); setEditingId(null); setForm(emptyForm) }}>
+                取消
+              </Button>
+              <Button size="sm" onClick={handleSave}>
+                {editingId ? '保存' : '添加'}
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
