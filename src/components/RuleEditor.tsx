@@ -1,4 +1,4 @@
-import { GripVertical, Plus, Trash2, Link } from 'lucide-react'
+import { GripVertical, Plus, Trash2, Link, Power } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { uuid } from '@/lib/uuid'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { RulesMergeMode } from '@/lib/api'
 
 export interface Rule {
   id: string
@@ -26,7 +25,6 @@ const RULE_TYPES = [
   { value: 'GEOIP', label: '国家/地区', placeholder: 'CN' },
   { value: 'IP-CIDR', label: 'IP 段', placeholder: '192.168.1.0/24' },
   { value: 'RULE-SET', label: '远端规则集', placeholder: 'https://example.com/rules.list' },
-  { value: 'MATCH', label: '默认策略', placeholder: '' },
 ]
 
 const POLICIES = [
@@ -35,30 +33,20 @@ const POLICIES = [
   { value: 'PROXY', label: 'PROXY', active: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400', inactive: 'text-muted-foreground hover:text-foreground' },
 ]
 
-// 上游规则占位项标记
-const UPSTREAM_MARKER = '__upstream__'
-
 interface RuleEditorProps {
   rules: Rule[]
   onChange: (rules: Rule[]) => void
-  mergeMode?: RulesMergeMode
-  onMergeModeChange?: (mode: RulesMergeMode) => void
+  showUpstream: boolean
+  onToggleUpstream: (show: boolean) => void
 }
 
-const UPSTREAM_RULE: Rule = { id: UPSTREAM_MARKER, type: UPSTREAM_MARKER, content: '', policy: '' }
-
-function buildDisplayList(rules: Rule[], mergeMode: RulesMergeMode): Rule[] {
-  if (mergeMode === 'prepend') return [...rules, UPSTREAM_RULE]
-  if (mergeMode === 'append') return [UPSTREAM_RULE, ...rules]
-  return rules
-}
-
-export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeModeChange }: RuleEditorProps) {
-  // dragList: 拖拽中的临时列表，null 时从 props 计算
+export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: RuleEditorProps) {
   const [dragList, setDragList] = useState<Rule[] | null>(null)
   const [draggedId, setDraggedId] = useState<string | null>(null)
 
-  const displayRules = dragList ?? buildDisplayList(rules, mergeMode)
+  const allRules = dragList ?? rules
+  const displayRules = allRules.filter((r) => r.type !== 'MATCH')
+  const matchRule = allRules.find((r) => r.type === 'MATCH')
 
   function updateRule(ruleId: string, updates: Partial<Rule>) {
     const next = rules.map((r) => (r.id === ruleId ? { ...r, ...updates } : r))
@@ -71,15 +59,20 @@ export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeMode
 
   function handleDragStart(id: string) {
     setDraggedId(id)
-    setDragList(buildDisplayList(rules, mergeMode))
+    setDragList(rules)
   }
 
   function handleDragOver(e: React.DragEvent, targetId: string) {
     e.preventDefault()
     if (!draggedId || draggedId === targetId || !dragList) return
     const from = dragList.findIndex((r) => r.id === draggedId)
-    const to = dragList.findIndex((r) => r.id === targetId)
+    let to = dragList.findIndex((r) => r.id === targetId)
     if (from === -1 || to === -1) return
+    // MATCH is fixed at bottom - don't allow dropping after it
+    const matchIdx = dragList.findIndex((r) => r.type === 'MATCH')
+    if (matchIdx !== -1 && to >= matchIdx && from < matchIdx) to = matchIdx - 1
+    if (to < 0) to = 0
+    if (from === to) return
     const next = [...dragList]
     const [moved] = next.splice(from, 1)
     next.splice(to, 0, moved)
@@ -88,12 +81,7 @@ export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeMode
 
   function handleDragEnd() {
     if (dragList) {
-      const upstreamIdx = dragList.findIndex((r) => r.id === UPSTREAM_MARKER)
-      const newRules = dragList.filter((r) => r.id !== UPSTREAM_MARKER)
-      onChange(newRules)
-      if (upstreamIdx !== -1 && onMergeModeChange) {
-        onMergeModeChange(upstreamIdx === 0 ? 'append' : 'prepend')
-      }
+      onChange(dragList)
     }
     setDragList(null)
     setDraggedId(null)
@@ -133,30 +121,7 @@ export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeMode
 
       {/* 规则行 */}
       {displayRules.map((rule) => {
-        const isUpstream = rule.id === UPSTREAM_MARKER
         const typeInfo = RULE_TYPES.find((t) => t.value === rule.type)
-        const isMatch = rule.type === 'MATCH'
-
-        if (isUpstream) {
-          return (
-            <div
-              key={rule.id}
-              draggable
-              onDragStart={() => handleDragStart(rule.id)}
-              onDragOver={(e) => handleDragOver(e, rule.id)}
-              onDragEnd={handleDragEnd}
-              className={`grid grid-cols-[32px_110px_1fr_160px_40px] gap-2 px-3 py-2.5 border-t items-center bg-muted/40 cursor-move min-h-[52px] ${draggedId ? '[&>*]:pointer-events-none' : ''}`}
-            >
-              <div className="cursor-grab active:cursor-grabbing">
-                <GripVertical className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <span className="text-xs font-medium text-muted-foreground">订阅自带规则</span>
-              <span className="text-xs text-muted-foreground italic">来自订阅，不可编辑</span>
-              <div></div>
-              <div></div>
-            </div>
-          )
-        }
 
         const isRuleSet = rule.type === 'RULE-SET'
 
@@ -219,32 +184,28 @@ export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeMode
             </div>
 
             <Select
-              value={rule.type}
-              onValueChange={(v) => updateRule(rule.id, { type: v })}
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {RULE_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value} className="text-xs">
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                value={rule.type}
+                onValueChange={(v) => updateRule(rule.id, { type: v })}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {RULE_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value} className="text-xs">
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            {isMatch ? (
-              <span className="text-xs text-muted-foreground">—</span>
-            ) : (
-              <Input
-                ref={rule.id === lastAddedId ? focusRef : undefined}
-                value={rule.content}
-                onChange={(e) => updateRule(rule.id, { content: e.target.value })}
-                placeholder={typeInfo?.placeholder}
-                className="h-8 text-xs"
-              />
-            )}
+            <Input
+              ref={rule.id === lastAddedId ? focusRef : undefined}
+              value={rule.content}
+              onChange={(e) => updateRule(rule.id, { content: e.target.value })}
+              placeholder={typeInfo?.placeholder}
+              className="h-8 text-xs"
+            />
 
             <div className="flex gap-1">
               {POLICIES.map((p) => (
@@ -274,6 +235,58 @@ export function RuleEditor({ rules, onChange, mergeMode = 'replace', onMergeMode
           </div>
         )
       })}
+
+      {/* 订阅源规则占位块（固定底部） */}
+      <div
+        className={`grid grid-cols-[32px_110px_1fr_160px_40px] gap-2 px-3 py-2.5 border-t items-center min-h-[52px] transition-colors ${
+          showUpstream ? 'bg-muted/40' : 'bg-muted/20 opacity-50'
+        }`}
+      >
+        <div></div>
+        <span className="text-xs font-medium text-muted-foreground">订阅源规则</span>
+        <span className="text-xs text-muted-foreground italic">
+          {showUpstream ? '已启用' : '已禁用'}
+        </span>
+        <div></div>
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`h-7 w-7 p-0 ${showUpstream ? 'hover:text-destructive' : 'hover:text-foreground'}`}
+            onClick={() => onToggleUpstream(!showUpstream)}
+            title={showUpstream ? '禁用订阅源规则' : '启用订阅源规则'}
+          >
+            <Power className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* MATCH 默认策略（固定最底部） */}
+      {matchRule && (
+        <div
+          key={matchRule.id}
+          className="grid grid-cols-[32px_110px_1fr_160px_40px] gap-2 px-3 py-2.5 border-t items-center bg-muted/30 min-h-[52px]"
+        >
+          <div></div>
+          <span className="text-xs font-medium text-muted-foreground">默认策略</span>
+          <div></div>
+          <div className="flex gap-1">
+            {POLICIES.map((p) => (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => updateRule(matchRule.id, { policy: p.value })}
+                className={`rounded px-1.5 py-0.5 text-xs font-medium transition-colors ${
+                  matchRule.policy === p.value ? p.active : p.inactive
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <div></div>
+        </div>
+      )}
 
       {/* 空状态 */}
       {displayRules.length === 0 && (
