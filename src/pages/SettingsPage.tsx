@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Monitor, Moon, Sun, Plus, Trash2, Check, Server } from 'lucide-react'
+import { Monitor, Moon, Sun, Plus, Trash2, Check, Server, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   type BackendConfig,
   getBackends,
@@ -17,6 +18,7 @@ import {
   setActiveBackendId,
   backendUrl,
 } from '@/lib/backends'
+import { getSubscriptionConfig, saveSubscriptionConfig, type UpdateIntervalMode } from '@/lib/api'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -40,6 +42,12 @@ export function SettingsPage({ theme, onThemeChange, autoOpenAdd }: SettingsPage
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [updateInterval, setUpdateInterval] = useState<UpdateIntervalMode>('auto')
+  const [savingInterval, setSavingInterval] = useState(false)
+
+  useEffect(() => {
+    getSubscriptionConfig().then((c) => setUpdateInterval(c.updateInterval)).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (autoOpenAdd) {
@@ -108,6 +116,19 @@ export function SettingsPage({ theme, onThemeChange, autoOpenAdd }: SettingsPage
     toast.success('后端已切换')
   }
 
+  async function handleIntervalSave(value: UpdateIntervalMode) {
+    setUpdateInterval(value)
+    setSavingInterval(true)
+    try {
+      await saveSubscriptionConfig(value)
+      toast.success('订阅设置已保存')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '保存失败')
+    } finally {
+      setSavingInterval(false)
+    }
+  }
+
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Card>
@@ -146,17 +167,21 @@ export function SettingsPage({ theme, onThemeChange, autoOpenAdd }: SettingsPage
           {backends.length > 0 && (
             <div className="space-y-1.5">
               <Label className="text-xs">当前后端</Label>
-              <select
+              <Select
                 value={activeId ?? ''}
-                onChange={(e) => handleSwitch(e.target.value)}
-                className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                onValueChange={(v) => handleSwitch(v)}
               >
-                {backends.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {backendUrl(b)}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="选择后端" />
+                </SelectTrigger>
+                <SelectContent>
+                  {backends.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {backendUrl(b)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
@@ -267,6 +292,46 @@ export function SettingsPage({ theme, onThemeChange, autoOpenAdd }: SettingsPage
           </div>
         </DialogContent>
       </Dialog>
+
+      <Card>
+        <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Clock className="h-4 w-4" />
+            订阅设置
+          </CardTitle>
+          <CardDescription className="text-xs">客户端自动更新订阅的间隔时间</CardDescription>
+        </CardHeader>
+        <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
+          <div className="space-y-2">
+            <Label className="text-xs">自动更新间隔</Label>
+            <Select
+              value={String(updateInterval)}
+              disabled={savingInterval}
+              onValueChange={(v) => {
+                const value = v === 'auto' ? 'auto' : Number(v)
+                setUpdateInterval(value)
+                handleIntervalSave(value)
+              }}
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">跟随订阅源</SelectItem>
+                <SelectItem value="900">15 分钟</SelectItem>
+                <SelectItem value="1800">30 分钟</SelectItem>
+                <SelectItem value="3600">1 小时</SelectItem>
+                <SelectItem value="21600">6 小时</SelectItem>
+                <SelectItem value="43200">12 小时</SelectItem>
+                <SelectItem value="86400">24 小时</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              对 Clash、Surfboard、Loon 生效，QuanX 和 Sing-box 由客户端自行管理
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

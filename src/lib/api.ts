@@ -175,6 +175,26 @@ export async function resetRules(): Promise<RulesConfig> {
   )
 }
 
+export type UpdateIntervalMode = 'auto' | number
+
+export interface SubscriptionConfig {
+  updateInterval: UpdateIntervalMode
+}
+
+export async function getSubscriptionConfig(): Promise<SubscriptionConfig> {
+  return handleResponse<SubscriptionConfig>(await fetch(apiUrl('/api/subscription')))
+}
+
+export async function saveSubscriptionConfig(updateInterval: UpdateIntervalMode): Promise<SubscriptionConfig> {
+  return handleResponse<SubscriptionConfig>(
+    await fetch(apiUrl('/api/subscription'), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ updateInterval }),
+    }),
+  )
+}
+
 export async function previewSubscription(
   upstream: string,
   target: SubTarget = '',
