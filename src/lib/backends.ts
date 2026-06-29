@@ -7,6 +7,11 @@ export interface BackendConfig {
   token: string
 }
 
+export function backendUrl(b: Pick<BackendConfig, 'protocol' | 'host' | 'port'>): string {
+  const isDefaultPort = (b.protocol === 'http' && b.port === 80) || (b.protocol === 'https' && b.port === 443)
+  return `${b.protocol}://${b.host}${isDefaultPort ? '' : `:${b.port}`}`
+}
+
 const STORAGE_KEY = 'backends'
 const ACTIVE_KEY = 'active_backend'
 
@@ -41,7 +46,7 @@ export function getActiveBackend(): BackendConfig | null {
 export function getApiBase(): string {
   const backend = getActiveBackend()
   if (backend) {
-    return `${backend.protocol}://${backend.host}:${backend.port}`.replace(/\/$/, '')
+    return backendUrl(backend).replace(/\/$/, '')
   }
   return ''
 }

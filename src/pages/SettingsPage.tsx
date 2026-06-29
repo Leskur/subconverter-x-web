@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Monitor, Moon, Sun, Plus, Trash2, Check, Server } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import {
   removeBackend,
   getActiveBackendId,
   setActiveBackendId,
+  backendUrl,
 } from '@/lib/backends'
 
 type ThemeMode = 'light' | 'dark' | 'system'
@@ -27,16 +28,25 @@ const THEME_OPTIONS: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
 interface SettingsPageProps {
   theme: ThemeMode
   onThemeChange: (mode: ThemeMode) => void
+  autoOpenAdd?: boolean
 }
 
 const emptyForm = { protocol: 'http' as 'http' | 'https', host: '', port: '', token: '' }
 
-export function SettingsPage({ theme, onThemeChange }: SettingsPageProps) {
+export function SettingsPage({ theme, onThemeChange, autoOpenAdd }: SettingsPageProps) {
   const [backends, setBackends] = useState<BackendConfig[]>(() => getBackends())
   const [activeId, setActiveId] = useState<string | null>(() => getActiveBackendId())
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
+
+  useEffect(() => {
+    if (autoOpenAdd) {
+      setEditingId(null)
+      setForm(emptyForm)
+      setDialogOpen(true)
+    }
+  }, [autoOpenAdd])
 
   function refresh() {
     setBackends(getBackends())
@@ -141,7 +151,7 @@ export function SettingsPage({ theme, onThemeChange }: SettingsPageProps) {
               >
                 {backends.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.protocol}://{b.host}:{b.port}
+                    {backendUrl(b)}
                   </option>
                 ))}
               </select>
@@ -161,7 +171,7 @@ export function SettingsPage({ theme, onThemeChange }: SettingsPageProps) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">
-                    {backend.protocol}://{backend.host}:{backend.port}
+                    {backendUrl(backend)}
                   </span>
                   {activeId === backend.id && (
                     <Check className="h-3.5 w-3.5 shrink-0 text-green-600" />
