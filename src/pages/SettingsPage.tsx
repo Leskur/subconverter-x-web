@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Monitor, Moon, Sun, Plus, Trash2, Check, Server } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -137,6 +138,7 @@ export function SettingsPage({ theme, onThemeChange, autoOpenAdd }: SettingsPage
           <CardTitle className="flex items-center gap-2 text-base">
             <Server className="h-4 w-4" />
             后端管理
+            <Badge variant="secondary" className="text-xs">{backends.length}</Badge>
           </CardTitle>
           <CardDescription className="text-xs">添加、切换、删除后端服务地址</CardDescription>
         </CardHeader>
@@ -233,7 +235,7 @@ export function SettingsPage({ theme, onThemeChange, autoOpenAdd }: SettingsPage
                 <Input
                   value={form.host}
                   onChange={(e) => setForm({ ...form, host: e.target.value })}
-                  placeholder="192.168.1.1"
+                  placeholder="127.0.0.1"
                 />
               </div>
               <div className="w-20 shrink-0 space-y-1.5">

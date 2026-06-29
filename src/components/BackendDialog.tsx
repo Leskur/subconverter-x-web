@@ -176,7 +176,7 @@ export function BackendDialog({ open, onOpenChange, autoOpenAdd }: BackendDialog
                   <Input
                     value={form.host}
                     onChange={(e) => setForm({ ...form, host: e.target.value })}
-                    placeholder="192.168.1.1"
+                    placeholder="127.0.0.1"
                   />
                 </div>
                 <div className="w-20 shrink-0 space-y-1.5">

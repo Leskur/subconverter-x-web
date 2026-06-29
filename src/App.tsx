@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { RulesPage } from '@/pages/RulesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
@@ -12,6 +13,15 @@ function applyTheme(mode: ThemeMode) {
     mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   document.documentElement.classList.toggle('dark', dark)
 }
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
 
 export default function App() {
   const [route, setRoute] = useState<AdminRoute>(getInitialRoute)
@@ -50,8 +60,10 @@ export default function App() {
   }
 
   return (
-    <AdminLayout route={route}>
-      {renderPage()}
-    </AdminLayout>
+    <QueryClientProvider client={queryClient}>
+      <AdminLayout route={route}>
+        {renderPage()}
+      </AdminLayout>
+    </QueryClientProvider>
   )
 }

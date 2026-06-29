@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Save, RotateCcw, ListPlus, Check, Bookmark } from 'lucide-react'
 import { toast } from 'sonner'
 import { uuid } from '@/lib/uuid'
@@ -10,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import { getRules, saveRules, resetRules, getCustomRulesets, saveCustomRulesets, type RulesMergeMode, type CustomRuleset } from '@/lib/api'
+import { getRules, saveRules, resetRules, getCustomRulesets, saveCustomRulesets, type RulesConfig, type RulesMergeMode, type CustomRuleset } from '@/lib/api'
 
 const PRESET_RULESETS: { label: string; desc: string; url: string; policy: string }[] = [
   {
@@ -70,16 +71,42 @@ const RULES_MERGE_OPTIONS: { value: RulesMergeMode; label: string; hint: string 
 ]
 
 export function RulesPage() {
-  const [rules, setRules] = useState<Rule[]>([])
-  const [savedRules, setSavedRules] = useState<Rule[]>([])
-  const [rulesMerge, setRulesMerge] = useState<RulesMergeMode>('prepend')
-  const [savedMerge, setSavedMerge] = useState<RulesMergeMode>('prepend')
+  const queryClient = useQueryClient()
+
+  const cached = queryClient.getQueryData<{ config: RulesConfig; rulesets: CustomRuleset[] }>(['rules'])
+  const cachedParsed = cached ? parseRules((cached.config.rules ?? []).join('\n')) : []
+  const cachedMerge = cached?.config.rulesMerge ?? 'replace'
+
+  const [rules, setRules] = useState<Rule[]>(cachedParsed)
+  const [savedRules, setSavedRules] = useState<Rule[]>(cachedParsed)
+  const [rulesMerge, setRulesMerge] = useState<RulesMergeMode>(cachedMerge)
+  const [savedMerge, setSavedMerge] = useState<RulesMergeMode>(cachedMerge)
   const [saving, setSaving] = useState(false)
   const [presetOpen, setPresetOpen] = useState(false)
   const presetRef = useRef<HTMLDivElement>(null)
-  const [customRulesets, setCustomRulesets] = useState<CustomRuleset[]>([])
+  const [customRulesets, setCustomRulesets] = useState<CustomRuleset[]>(cached?.rulesets ?? [])
   const [savingName, setSavingName] = useState('')
   const [showSaveInput, setShowSaveInput] = useState(false)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['rules'],
+    queryFn: async () => {
+      const [config, rulesets] = await Promise.all([getRules(), getCustomRulesets()])
+      return { config, rulesets }
+    },
+    staleTime: 0,
+  })
+
+  useEffect(() => {
+    if (!data) return
+    const parsed = parseRules((data.config.rules ?? []).join('\n'))
+    const merge = data.config.rulesMerge ?? 'replace'
+    setRules(parsed)
+    setSavedRules(parsed)
+    setRulesMerge(merge)
+    setSavedMerge(merge)
+    setCustomRulesets(data.rulesets)
+  }, [data])
 
   const isDirty = useMemo(() => {
     if (rulesMerge !== savedMerge) return true
@@ -151,21 +178,6 @@ export function RulesPage() {
   const selectedMerge =
     RULES_MERGE_OPTIONS.find((opt) => opt.value === rulesMerge) ?? RULES_MERGE_OPTIONS[0]
 
-  const fetchRules = useCallback(async () => {
-    const [config, rulesets] = await Promise.all([getRules(), getCustomRulesets()])
-    const parsed = parseRules((config.rules ?? []).join('\n'))
-    const merge = config.rulesMerge ?? 'replace'
-    setRules(parsed)
-    setSavedRules(parsed)
-    setRulesMerge(merge)
-    setSavedMerge(merge)
-    setCustomRulesets(rulesets)
-  }, [])
-
-  useEffect(() => {
-    fetchRules().catch((error) => toast.error(error instanceof Error ? error.message : '加载失败'))
-  }, [fetchRules])
-
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (presetRef.current && !presetRef.current.contains(e.target as Node)) {
@@ -191,6 +203,7 @@ export function RulesPage() {
       toast.success('规则已保存')
       setSavedRules(rules)
       setSavedMerge(rulesMerge)
+      queryClient.invalidateQueries({ queryKey: ['rules'] })
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '保存失败')
     } finally {
@@ -207,6 +220,7 @@ export function RulesPage() {
       setRulesMerge(config.rulesMerge ?? 'replace')
       setSavedMerge(config.rulesMerge ?? 'replace')
       toast.success('已恢复默认规则')
+      queryClient.invalidateQueries({ queryKey: ['rules'] })
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '恢复失败')
     }
@@ -214,6 +228,13 @@ export function RulesPage() {
 
   return (
     <div className="space-y-4">
+      {isLoading && !cached && (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
+      {(!isLoading || cached) && (
+        <>
       <Card>
         <CardHeader className="flex-row items-start justify-between space-y-0 gap-3 p-4 sm:p-5">
           <div className="space-y-1">
@@ -377,6 +398,8 @@ export function RulesPage() {
       <p className="text-center text-xs text-muted-foreground">
         合并时自动去重，兜底规则（MATCH）始终置于末尾
       </p>
+        </>
+      )}
     </div>
   )
 }
