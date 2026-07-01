@@ -8,6 +8,9 @@ const pkg = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'ut
 export default defineConfig(() => {
   return {
     base: '/',
+    server: {
+      port: 15501,
+    },
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),
     },
