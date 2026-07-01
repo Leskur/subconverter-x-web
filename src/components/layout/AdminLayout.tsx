@@ -94,7 +94,7 @@ export function AdminLayout({ route, children }: AdminLayoutProps) {
         <div className="mx-auto flex w-full max-w-5xl items-center justify-start px-4 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-2">
             <a
-              href="https://github.com/Leskur/subconverter-x"
+              href="https://github.com/Leskur/subconverter-x-server"
               target="_blank"
               rel="noreferrer"
               className="hover:text-foreground flex items-center gap-1"

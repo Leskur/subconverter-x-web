@@ -1,6 +1,6 @@
 # subconverter-x-web
 
-[subconverter-x](https://github.com/Leskur/subconverter-x) 的管理前端，基于 React + Vite + shadcn/ui 构建。
+[subconverter-x-server](https://github.com/Leskur/subconverter-x-server) 的管理前端，基于 React + Vite + shadcn/ui 构建。
 
 ## 开发
 
