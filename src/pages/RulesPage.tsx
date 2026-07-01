@@ -66,7 +66,7 @@ export function RulesPage() {
       const existing = new Set(prev.map((r) => `${r.type}:${r.content}`))
       const toAdd = preset.rules
         .filter((r) => !existing.has(`${r.type}:${r.content}`))
-        .map((r) => ({ ...r, id: uuid() }))
+        .map((r) => ({ ...r, id: uuid(), enabled: true }))
       const matchIdx = prev.findIndex((r) => r.type === 'MATCH')
       if (matchIdx === -1) return [...prev, ...toAdd]
       return [...prev.slice(0, matchIdx), ...toAdd, ...prev.slice(matchIdx)]

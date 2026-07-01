@@ -1,8 +1,9 @@
-import { GripVertical, Plus, Trash2, Link, Power } from 'lucide-react'
+import { GripVertical, Plus, Trash2, Link } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { uuid } from '@/lib/uuid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -16,6 +17,7 @@ export interface Rule {
   type: string
   content: string
   policy: string
+  enabled: boolean
 }
 
 const RULE_TYPES = [
@@ -96,6 +98,7 @@ export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: 
       type: 'DOMAIN-SUFFIX',
       content: '',
       policy: 'PROXY',
+      enabled: true,
     }
     onChange([...rules, newRule])
     setLastAddedId(newRule.id)
@@ -111,7 +114,7 @@ export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: 
   return (
     <div className="rounded-md border overflow-hidden">
       {/* 表头 */}
-      <div className="grid grid-cols-[32px_110px_1fr_160px_40px] gap-2 px-3 py-2 bg-muted text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className="grid grid-cols-[32px_110px_1fr_160px_56px] gap-2 px-3 py-2 bg-muted text-xs font-medium text-muted-foreground uppercase tracking-wide">
         <div></div>
         <div>类型</div>
         <div>匹配内容</div>
@@ -133,7 +136,7 @@ export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: 
               onDragStart={() => handleDragStart(rule.id)}
               onDragOver={(e) => handleDragOver(e, rule.id)}
               onDragEnd={handleDragEnd}
-              className={`grid grid-cols-[32px_1fr_120px_40px] gap-2 px-3 py-2.5 border-t items-center hover:bg-accent/20 cursor-move min-h-[52px] ${draggedId ? '[&>*]:pointer-events-none' : ''}`}
+              className={`grid grid-cols-[32px_1fr_120px_56px] gap-2 px-3 py-2.5 border-t items-center hover:bg-accent/20 cursor-move min-h-[52px] ${rule.enabled === false ? 'opacity-40' : ''} ${draggedId ? '[&>*]:pointer-events-none' : ''}`}
             >
               <div className="cursor-grab active:cursor-grabbing">
                 <GripVertical className="h-4 w-4 text-muted-foreground" />
@@ -156,7 +159,12 @@ export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: 
                 placeholder="PROXY"
                 className="h-8 text-xs"
               />
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-0.5">
+                <Switch
+                  checked={rule.enabled !== false}
+                  onCheckedChange={(checked) => updateRule(rule.id, { enabled: checked })}
+                  title={rule.enabled === false ? '启用' : '禁用'}
+                />
                 <Button
                   variant="ghost"
                   size="sm"
@@ -177,7 +185,7 @@ export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: 
             onDragStart={() => handleDragStart(rule.id)}
             onDragOver={(e) => handleDragOver(e, rule.id)}
             onDragEnd={handleDragEnd}
-            className={`grid grid-cols-[32px_110px_1fr_160px_40px] gap-2 px-3 py-2.5 border-t items-center hover:bg-accent/20 cursor-move min-h-[52px] ${draggedId ? '[&>*]:pointer-events-none' : ''}`}
+            className={`grid grid-cols-[32px_110px_1fr_160px_56px] gap-2 px-3 py-2.5 border-t items-center hover:bg-accent/20 cursor-move min-h-[52px] ${rule.enabled === false ? 'opacity-40' : ''} ${draggedId ? '[&>*]:pointer-events-none' : ''}`}
           >
             <div className="cursor-grab active:cursor-grabbing">
               <GripVertical className="h-4 w-4 text-muted-foreground" />
@@ -222,7 +230,12 @@ export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: 
               ))}
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-1.5 items-center">
+              <Switch
+                checked={rule.enabled !== false}
+                onCheckedChange={(checked) => updateRule(rule.id, { enabled: checked })}
+                title={rule.enabled === false ? '启用' : '禁用'}
+              />
               <Button
                 variant="ghost"
                 size="sm"
@@ -238,7 +251,7 @@ export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: 
 
       {/* 订阅源规则占位块（固定底部） */}
       <div
-        className={`grid grid-cols-[32px_110px_1fr_160px_40px] gap-2 px-3 py-2.5 border-t items-center min-h-[52px] transition-colors ${
+        className={`grid grid-cols-[32px_110px_1fr_160px_56px] gap-2 px-3 py-2.5 border-t items-center min-h-[52px] transition-colors ${
           showUpstream ? 'bg-muted/40' : 'bg-muted/20 opacity-50'
         }`}
       >
@@ -249,15 +262,12 @@ export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: 
         </span>
         <div></div>
         <div className="flex justify-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-7 w-7 p-0 ${showUpstream ? 'hover:text-destructive' : 'hover:text-foreground'}`}
-            onClick={() => onToggleUpstream(!showUpstream)}
+          <Switch
+            checked={showUpstream}
+            onCheckedChange={(checked) => onToggleUpstream(checked)}
             title={showUpstream ? '禁用订阅源规则' : '启用订阅源规则'}
-          >
-            <Power className="h-4 w-4" />
-          </Button>
+            className="mr-7"
+          />
         </div>
       </div>
 
@@ -265,7 +275,7 @@ export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: 
       {matchRule && (
         <div
           key={matchRule.id}
-          className="grid grid-cols-[32px_110px_1fr_160px_40px] gap-2 px-3 py-2.5 border-t items-center bg-muted/30 min-h-[52px]"
+          className="grid grid-cols-[32px_110px_1fr_160px_56px] gap-2 px-3 py-2.5 border-t items-center bg-muted/30 min-h-[52px]"
         >
           <div></div>
           <span className="text-xs font-medium text-muted-foreground">默认策略</span>
@@ -319,16 +329,18 @@ export function parseRules(text: string): Rule[] {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line, index) => {
-      if (line.startsWith('rule-set:')) {
-        const rest = line.slice('rule-set:'.length)
+      const enabled = !line.startsWith('#')
+      const raw = enabled ? line : line.slice(1).trim()
+      if (raw.startsWith('rule-set:')) {
+        const rest = raw.slice('rule-set:'.length)
         const commaIdx = rest.lastIndexOf(',')
         const url = commaIdx === -1 ? rest : rest.slice(0, commaIdx)
         const policy = commaIdx === -1 ? 'PROXY' : rest.slice(commaIdx + 1)
-        return { id: String(index), type: 'RULE-SET', content: url, policy }
+        return { id: String(index), type: 'RULE-SET', content: url, policy, enabled }
       }
-      const parts = line.split(',')
+      const parts = raw.split(',')
       if (parts.length === 2 && parts[0] === 'MATCH') {
-        return { id: String(index), type: 'MATCH', content: '', policy: parts[1] }
+        return { id: String(index), type: 'MATCH', content: '', policy: parts[1], enabled }
       }
       if (parts.length >= 3) {
         return {
@@ -336,18 +348,20 @@ export function parseRules(text: string): Rule[] {
           type: parts[0],
           content: parts[1],
           policy: parts[2],
+          enabled,
         }
       }
-      return { id: String(index), type: 'DOMAIN-SUFFIX', content: line, policy: 'PROXY' }
+      return { id: String(index), type: 'DOMAIN-SUFFIX', content: raw, policy: 'PROXY', enabled }
     })
 }
 
 export function stringifyRules(rules: Rule[]): string {
   return rules
     .map((r) => {
-      if (r.type === 'MATCH') return `MATCH,${r.policy}`
-      if (r.type === 'RULE-SET') return `rule-set:${r.content},${r.policy}`
-      return `${r.type},${r.content},${r.policy}`
+      const prefix = r.enabled === false ? '#' : ''
+      if (r.type === 'MATCH') return `${prefix}MATCH,${r.policy}`
+      if (r.type === 'RULE-SET') return `${prefix}rule-set:${r.content},${r.policy}`
+      return `${prefix}${r.type},${r.content},${r.policy}`
     })
     .join('\n')
 }
