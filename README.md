@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-默认将 API 请求代理到 `http://127.0.0.1:3000`，需先启动后端：
+默认将 API 请求代理到 `http://127.0.0.1:15500`，需先启动后端：
 
 ```bash
 # 在后端仓库目录
@@ -25,7 +25,7 @@ npm run dev
 本地开发时在项目根目录创建 `.env.local`：
 
 ```
-VITE_API_BASE=http://127.0.0.1:3000
+VITE_API_BASE=http://127.0.0.1:15500
 ```
 
 ## 构建
@@ -46,4 +46,4 @@ npm run build
    - **环境变量**：`VITE_API_BASE=https://your-backend-domain`
 3. 点击 Save and Deploy，后续 push 到 main 自动部署
 
-> 也可用 Wrangler CLI：`npx wrangler pages deploy dist --project-name=subconverter-x`
+> 也可用 Wrangler CLI：`npx wrangler pages deploy dist --project-name=subconverter-x-web`
