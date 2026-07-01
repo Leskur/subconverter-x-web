@@ -130,7 +130,7 @@ export function SettingsPage({ theme, onThemeChange, autoOpenAdd }: SettingsPage
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4">
       <Card>
         <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3">
           <CardTitle className="text-base">主题</CardTitle>
