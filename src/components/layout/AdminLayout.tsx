@@ -103,9 +103,9 @@ export function AdminLayout({ route, children }: AdminLayoutProps) {
               GitHub
             </a>
             <span>·</span>
-            Web v{__APP_VERSION__}
+            Panel v{__APP_VERSION__}
             <span>·</span>
-            API {meta ? `v${meta.version}` : '—'}
+            Server {meta ? `v${meta.version}` : '—'}
           </span>
         </div>
       </footer>
