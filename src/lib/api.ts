@@ -1,7 +1,7 @@
 import { parse as parseYaml } from 'yaml'
 import { getApiBase, getActiveToken } from './backends'
 
-export type SubTarget = '' | 'clash' | 'singbox' | 'surge' | 'surfboard' | 'loon' | 'quanx'
+export type SubTarget = '' | 'clash' | 'surge' | 'surfboard' | 'loon' | 'quanx'
 
 export interface SubscriptionUrlOptions {
   upstream?: string
@@ -82,7 +82,7 @@ export interface SubPreviewResult {
   nodeCount?: number
   groupCount?: number
   ruleCount?: number
-  format?: 'clash' | 'singbox' | 'surge' | 'unknown'
+  format?: 'clash' | 'surge' | 'unknown'
   contentType?: string
   error?: string
 }
@@ -220,25 +220,15 @@ export async function previewSubscription(
 
     const body = await res.text()
     const contentType = res.headers.get('content-type') ?? ''
-    const isJson = contentType.includes('json') || body.trimStart().startsWith('{')
-    const isYaml = !isJson && (contentType.includes('yaml') || body.includes('proxies:'))
-    const isSurge = !isJson && !isYaml && body.includes('[Proxy]')
+    const isYaml = contentType.includes('yaml') || body.includes('proxies:')
+    const isSurge = !isYaml && body.includes('[Proxy]')
 
     let format: SubPreviewResult['format'] = 'unknown'
     let nodeCount: number | undefined
     let groupCount: number | undefined
     let ruleCount: number | undefined
 
-    if (isJson) {
-      format = 'singbox'
-      try {
-        const json = JSON.parse(body) as { outbounds?: unknown[] }
-        nodeCount = json.outbounds?.filter((o) => {
-          const t = (o as Record<string, unknown>).type
-          return typeof t === 'string' && !['selector', 'urltest', 'direct', 'block', 'dns'].includes(t)
-        }).length
-      } catch { /* ignore */ }
-    } else if (isYaml) {
+    if (isYaml) {
       format = 'clash'
       try {
         const doc = parseYaml(body) as Record<string, unknown>

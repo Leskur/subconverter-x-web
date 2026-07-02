@@ -327,7 +327,7 @@ export function SettingsPage({ theme, onThemeChange, autoOpenAdd }: SettingsPage
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              对 Clash、Surfboard、Loon 生效，QuanX 和 Sing-box 由客户端自行管理
+              对 Clash、Surfboard、Loon 生效，QuanX 由客户端自行管理
             </p>
           </div>
         </CardContent>

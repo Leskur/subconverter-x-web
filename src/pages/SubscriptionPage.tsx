@@ -26,10 +26,9 @@ const CLIENT_FORMAT_OPTIONS: { value: SubTarget; label: string; hint: string }[]
   {
     value: '',
     label: '自动识别（推荐）',
-    hint: '根据客户端请求自动判断，Clash 收到 YAML，Sing-box 收到 JSON',
+    hint: '根据客户端 User-Agent 自动判断输出格式',
   },
   { value: 'clash', label: 'Clash / Clash Meta', hint: '始终输出 Clash / Clash Meta 可用的 YAML' },
-  { value: 'singbox', label: 'Sing-box', hint: '始终输出 Sing-box JSON 配置' },
   { value: 'surge', label: 'Surge', hint: '始终输出 Surge 配置' },
   { value: 'surfboard', label: 'Surfboard', hint: '始终输出 Surfboard 配置（Clash YAML 兼容）' },
   { value: 'loon', label: 'Loon', hint: '始终输出 Loon 配置' },
