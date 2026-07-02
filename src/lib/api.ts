@@ -210,7 +210,7 @@ export async function previewSubscription(
 
   try {
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'clash.meta' },
+      headers: { 'User-Agent': 'clash-verge/v2.5.1' },
     })
 
     if (!res.ok) {
