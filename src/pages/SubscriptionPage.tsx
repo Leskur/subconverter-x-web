@@ -47,7 +47,7 @@ export function SubscriptionPage() {
     [upstream, target],
   )
 
-  const canUse = upstream.trim().length > 0 && !subUrl.includes('<upstream>')
+  const canUse = upstream.trim().length > 0
   const selectedFormat =
     CLIENT_FORMAT_OPTIONS.find((opt) => opt.value === target) ?? CLIENT_FORMAT_OPTIONS[0]
 

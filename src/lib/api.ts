@@ -96,7 +96,7 @@ function apiUrl(path: string): string {
 }
 
 function authHeaders(): HeadersInit {
-  const token = getActiveToken() ?? localStorage.getItem('admin_token')
+  const token = getActiveToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
@@ -209,9 +209,7 @@ export async function previewSubscription(
   }
 
   try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'clash-verge/v2.5.1' },
-    })
+    const res = await fetch(url)
 
     if (!res.ok) {
       const err = (await res.json().catch(() => ({}))) as { error?: string }
