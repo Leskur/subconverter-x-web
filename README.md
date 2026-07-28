@@ -18,17 +18,7 @@ npm run dev
 npm run dev
 ```
 
-## 环境变量
-
-| 变量 | 说明 | 示例 |
-|---|---|---|
-| `VITE_API_BASE` | 后端 API 地址。前后端分离部署时必须设置。 | `https://api.example.com` |
-
-本地开发时在项目根目录创建 `.env.local`：
-
-```
-VITE_API_BASE=http://127.0.0.1:15500
-```
+启动前端后，首次进入页面请在「后端管理」中添加后端地址（本地开发通常填 `http://127.0.0.1:15500`）。
 
 ## 构建
 
@@ -51,7 +41,7 @@ npm test
 2. 选择本仓库，配置如下：
    - **构建命令**：`npm run build`
    - **输出目录**：`dist`
-   - **环境变量**：`VITE_API_BASE=https://your-backend-domain`
 3. 点击 Save and Deploy，后续 push 到 main 自动部署
+4. 首次打开页面后，在「后端管理」中添加你的后端地址
 
 > 也可用 Wrangler CLI：`npx wrangler pages deploy dist --project-name=subconverter-x-web`

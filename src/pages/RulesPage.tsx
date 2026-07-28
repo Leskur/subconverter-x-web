@@ -9,23 +9,21 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { getApiBase, subscribeBackendChange } from '@/lib/backends'
 import { getRules, saveRules, getRulesDefault, getCustomRulesets, saveCustomRulesets, type RulesConfig, type RulesMergeMode, type CustomRuleset } from '@/lib/api'
-
-function deriveMergeMode(showUpstream: boolean): RulesMergeMode {
-  return showUpstream ? 'prepend' : 'replace'
-}
 
 export function RulesPage() {
   const queryClient = useQueryClient()
+  const [backendKey, setBackendKey] = useState(() => getApiBase())
 
-  const cached = queryClient.getQueryData<{ config: RulesConfig; rulesets: CustomRuleset[] }>(['rules'])
+  const cached = queryClient.getQueryData<{ config: RulesConfig; rulesets: CustomRuleset[] }>(['rules', backendKey])
   const cachedParsed = cached ? parseRules((cached.config.rules ?? []).join('\n')) : []
   const cachedMerge = cached?.config.rulesMerge ?? 'replace'
 
   const [rules, setRules] = useState<Rule[]>(cachedParsed)
   const [savedRules, setSavedRules] = useState<Rule[]>(cachedParsed)
-  const [showUpstream, setShowUpstream] = useState(cachedMerge !== 'replace')
-  const [savedShowUpstream, setSavedShowUpstream] = useState(cachedMerge !== 'replace')
+  const [rulesMerge, setRulesMerge] = useState<RulesMergeMode>(cachedMerge)
+  const [savedRulesMerge, setSavedRulesMerge] = useState<RulesMergeMode>(cachedMerge)
   const [saving, setSaving] = useState(false)
   const [presetOpen, setPresetOpen] = useState(false)
   const presetRef = useRef<HTMLDivElement>(null)
@@ -33,12 +31,15 @@ export function RulesPage() {
   const [savingName, setSavingName] = useState('')
   const [showSaveInput, setShowSaveInput] = useState(false)
 
+  useEffect(() => subscribeBackendChange(() => setBackendKey(getApiBase())), [])
+
   const { data, isLoading } = useQuery({
-    queryKey: ['rules'],
+    queryKey: ['rules', backendKey],
     queryFn: async () => {
       const [config, rulesets] = await Promise.all([getRules(), getCustomRulesets()])
       return { config, rulesets }
     },
+    enabled: !!backendKey,
     staleTime: 0,
   })
 
@@ -48,18 +49,16 @@ export function RulesPage() {
     const merge = data.config.rulesMerge ?? 'replace'
     setRules(parsed)
     setSavedRules(parsed)
-    setShowUpstream(merge !== 'replace')
-    setSavedShowUpstream(merge !== 'replace')
+    setRulesMerge(merge)
+    setSavedRulesMerge(merge)
     setCustomRulesets(data.rulesets)
   }, [data])
 
-  const rulesMerge = deriveMergeMode(showUpstream)
-
   const isDirty = useMemo(() => {
-    if (showUpstream !== savedShowUpstream) return true
+    if (rulesMerge !== savedRulesMerge) return true
     if (rules.length !== savedRules.length) return true
     return stringifyRules(rules) !== stringifyRules(savedRules)
-  }, [rules, savedRules, showUpstream, savedShowUpstream])
+  }, [rules, savedRules, rulesMerge, savedRulesMerge])
 
   function insertCustomRuleset(preset: CustomRuleset) {
     setRules((prev) => {
@@ -119,7 +118,7 @@ export function RulesPage() {
 
   function handleRevert() {
     setRules(savedRules)
-    setShowUpstream(savedShowUpstream)
+    setRulesMerge(savedRulesMerge)
   }
 
   async function handleSave() {
@@ -131,8 +130,8 @@ export function RulesPage() {
       })
       toast.success('规则已保存')
       setSavedRules(rules)
-      setSavedShowUpstream(showUpstream)
-      queryClient.invalidateQueries({ queryKey: ['rules'] })
+      setSavedRulesMerge(rulesMerge)
+      queryClient.invalidateQueries({ queryKey: ['rules', backendKey] })
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '保存失败')
     } finally {
@@ -146,7 +145,7 @@ export function RulesPage() {
       const parsed = parseRules((config.rules ?? []).join('\n'))
       const merge = config.rulesMerge ?? 'replace'
       setRules(parsed)
-      setShowUpstream(merge !== 'replace')
+      setRulesMerge(merge)
       toast.success('已恢复默认规则，记得保存')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '恢复失败')
@@ -275,8 +274,13 @@ export function RulesPage() {
           <RuleEditor
             rules={rules}
             onChange={setRules}
-            showUpstream={showUpstream}
-            onToggleUpstream={setShowUpstream}
+            rulesMerge={rulesMerge}
+            onToggleUpstream={(checked) =>
+              setRulesMerge((current) => {
+                if (!checked) return 'replace'
+                return current === 'replace' ? 'prepend' : current
+              })
+            }
           />
         </CardContent>
       </Card>

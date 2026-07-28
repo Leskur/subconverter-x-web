@@ -1,3 +1,4 @@
+import type { RulesMergeMode } from '@/lib/api'
 import { GripVertical, Plus, Trash2, Link } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { uuid } from '@/lib/uuid'
@@ -38,13 +39,20 @@ const POLICIES = [
 interface RuleEditorProps {
   rules: Rule[]
   onChange: (rules: Rule[]) => void
-  showUpstream: boolean
+  rulesMerge: RulesMergeMode
   onToggleUpstream: (show: boolean) => void
 }
 
-export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: RuleEditorProps) {
+export function RuleEditor({ rules, onChange, rulesMerge, onToggleUpstream }: RuleEditorProps) {
   const [dragList, setDragList] = useState<Rule[] | null>(null)
   const [draggedId, setDraggedId] = useState<string | null>(null)
+  const showUpstream = rulesMerge !== 'replace'
+  const upstreamHint =
+    rulesMerge === 'append'
+      ? '已启用（订阅源优先）'
+      : rulesMerge === 'prepend'
+        ? '已启用（自定义优先）'
+        : '已禁用'
 
   const allRules = dragList ?? rules
   const displayRules = allRules.filter((r) => r.type !== 'MATCH')
@@ -258,7 +266,7 @@ export function RuleEditor({ rules, onChange, showUpstream, onToggleUpstream }: 
         <div></div>
         <span className="text-xs font-medium text-muted-foreground">订阅源规则</span>
         <span className="text-xs text-muted-foreground italic">
-          {showUpstream ? '已启用' : '已禁用'}
+          {upstreamHint}
         </span>
         <div></div>
         <div className="flex justify-center">

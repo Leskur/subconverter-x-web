@@ -14,6 +14,11 @@ export function backendUrl(b: Pick<BackendConfig, 'protocol' | 'host' | 'port'>)
 
 const STORAGE_KEY = 'backends'
 const ACTIVE_KEY = 'active_backend'
+const BACKEND_CHANGE_EVENT = 'subconverter:backend-change'
+
+function emitBackendChange() {
+  window.dispatchEvent(new Event(BACKEND_CHANGE_EVENT))
+}
 
 export function getBackends(): BackendConfig[] {
   const raw = localStorage.getItem(STORAGE_KEY)
@@ -27,6 +32,7 @@ export function getBackends(): BackendConfig[] {
 
 export function saveBackends(backends: BackendConfig[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(backends))
+  emitBackendChange()
 }
 
 export function getActiveBackendId(): string | null {
@@ -35,6 +41,7 @@ export function getActiveBackendId(): string | null {
 
 export function setActiveBackendId(id: string): void {
   localStorage.setItem(ACTIVE_KEY, id)
+  emitBackendChange()
 }
 
 export function getActiveBackend(): BackendConfig | null {
@@ -81,6 +88,12 @@ export function removeBackend(id: string): void {
       setActiveBackendId(backends[0].id)
     }
   }
+  emitBackendChange()
+}
+
+export function subscribeBackendChange(listener: () => void): () => void {
+  window.addEventListener(BACKEND_CHANGE_EVENT, listener)
+  return () => window.removeEventListener(BACKEND_CHANGE_EVENT, listener)
 }
 
 function generateId(): string {

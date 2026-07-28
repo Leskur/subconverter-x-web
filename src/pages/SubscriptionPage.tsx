@@ -215,7 +215,7 @@ export function SubscriptionPage() {
         <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
           <ul className="list-inside list-disc space-y-2 text-sm leading-relaxed text-muted-foreground">
             <li>
-              输出 Clash 格式时会合并 <code className="text-xs">data/rules.yaml</code>；可在「规则」和「代理组」页配置与订阅自带内容的合并方式。
+              输出 Clash 格式时会合并 <code className="text-xs">data/rules.yaml</code>；可在「规则」页配置与订阅自带内容的合并方式。
             </li>
             <li>在浏览器直接打开链接会请求机场原始地址，不经过转换；请通过客户端更新订阅或使用「测试拉取」验证。</li>
           </ul>
