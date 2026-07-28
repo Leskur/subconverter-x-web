@@ -1,6 +1,8 @@
 # subconverter-x-web
 
-[subconverter-x-server](https://github.com/Leskur/subconverter-x-server) 的管理前端，基于 React + Vite + shadcn/ui 构建。
+[subconverter-x-server](https://github.com/Leskur/subconverter-x-server) 的管理前端。用于配置后端地址、管理规则、预览订阅转换结果。
+
+## 30 秒上手
 
 ## 开发
 
@@ -9,7 +11,7 @@ npm install
 npm run dev
 ```
 
-默认将 API 请求代理到 `http://127.0.0.1:15500`，需先启动后端：
+同时启动后端（默认 `http://127.0.0.1:15500`）：
 
 ```bash
 # 在后端仓库目录
@@ -33,6 +35,12 @@ VITE_API_BASE=http://127.0.0.1:15500
 ```bash
 npm run build
 # 产物目录：dist/
+```
+
+## 测试
+
+```bash
+npm test
 ```
 
 `dist/` 可部署到任意静态托管平台（Cloudflare Pages、Vercel、Nginx 等）。
