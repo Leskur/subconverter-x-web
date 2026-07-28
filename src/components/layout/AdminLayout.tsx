@@ -1,10 +1,11 @@
 import { Github, Link2, ScrollText, Settings, Server, Plus } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
+import { BackendManager } from '@/components/BackendManager'
 import { cn } from '@/lib/utils'
 import { navigateRoute, type AdminPage, type AdminRoute } from '@/lib/router'
 import { getAdminMeta, type AdminMeta } from '@/lib/api'
-import { BackendDialog } from '@/components/BackendDialog'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { getActiveBackend } from '@/lib/backends'
 
 interface NavItem {
@@ -31,8 +32,12 @@ export function AdminLayout({ route, children }: AdminLayoutProps) {
   const [hasBackend, setHasBackend] = useState(() => !!getActiveBackend())
 
   useEffect(() => {
+    if (!hasBackend) {
+      setMeta(null)
+      return
+    }
     getAdminMeta().then(setMeta).catch(() => {})
-  }, [])
+  }, [hasBackend])
 
   useEffect(() => {
     if (!backendDialogOpen) {
@@ -70,7 +75,21 @@ export function AdminLayout({ route, children }: AdminLayoutProps) {
         </div>
       </header>
 
-      <BackendDialog open={backendDialogOpen} onOpenChange={(v) => { setBackendDialogOpen(v); if (!v) setAutoOpenAdd(false) }} autoOpenAdd={autoOpenAdd} />
+      <Dialog
+        open={backendDialogOpen}
+        onOpenChange={(open) => {
+          setBackendDialogOpen(open)
+          if (!open) setAutoOpenAdd(false)
+        }}
+      >
+        <DialogContent className="max-w-lg w-[95vw]">
+          <DialogHeader>
+            <DialogTitle>后端管理</DialogTitle>
+            <DialogDescription>添加、切换、删除后端服务地址</DialogDescription>
+          </DialogHeader>
+          <BackendManager autoOpenAdd={autoOpenAdd} onConfiguredChange={setHasBackend} />
+        </DialogContent>
+      </Dialog>
 
       <main className="flex-1 p-4 md:p-5">
         {hasBackend ? (

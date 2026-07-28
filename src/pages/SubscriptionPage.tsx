@@ -30,7 +30,7 @@ const CLIENT_FORMAT_OPTIONS: { value: SubTarget; label: string; hint: string }[]
   },
   { value: 'clash', label: 'Clash / Clash Meta', hint: '始终输出 Clash / Clash Meta 可用的 YAML' },
   { value: 'surge', label: 'Surge', hint: '始终输出 Surge 配置' },
-  { value: 'surfboard', label: 'Surfboard', hint: '始终输出 Surfboard 配置（Clash YAML 兼容）' },
+  { value: 'surfboard', label: 'Surfboard', hint: '始终输出 Surfboard 配置' },
   { value: 'loon', label: 'Loon', hint: '始终输出 Loon 配置' },
   { value: 'quanx', label: 'Quantumult X', hint: '始终输出 Quantumult X 配置' },
 ]
@@ -90,7 +90,7 @@ export function SubscriptionPage() {
         <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3">
           <CardTitle className="text-base">转换设置</CardTitle>
           <CardDescription className="text-xs">
-            填入机场订阅地址，生成可直接导入 Clash、Sing-box 等客户端的订阅链接
+            填入机场订阅地址，生成可直接导入 Clash、Surge、Loon 等客户端的订阅链接
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 p-4 pt-0 sm:p-5 sm:pt-0">
