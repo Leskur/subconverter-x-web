@@ -72,16 +72,32 @@ export function BackendManager({ autoOpenAdd = false, onConfiguredChange }: Back
   }
 
   function handleSave() {
-    if (!form.host.trim()) {
+    const host = form.host.trim()
+    const portText = form.port.trim()
+
+    if (!host) {
       toast.error('请填写后端地址')
       return
     }
 
+    let port = 15500
+    if (portText) {
+      if (!/^\d+$/.test(portText)) {
+        toast.error('端口必须是数字')
+        return
+      }
+      port = Number(portText)
+      if (port < 1 || port > 65535) {
+        toast.error('端口必须在 1-65535 之间')
+        return
+      }
+    }
+
     const data = {
-      name: `${form.protocol}://${form.host.trim()}:${form.port}`,
+      name: `${form.protocol}://${host}:${port}`,
       protocol: form.protocol,
-      host: form.host.trim(),
-      port: Number(form.port) || 15500,
+      host,
+      port,
       token: form.token.trim(),
     }
 
@@ -99,6 +115,9 @@ export function BackendManager({ autoOpenAdd = false, onConfiguredChange }: Back
   }
 
   function handleRemove(id: string) {
+    if (!window.confirm('确定删除这个后端吗？')) {
+      return
+    }
     removeBackend(id)
     refresh()
     toast.success('后端已删除')
