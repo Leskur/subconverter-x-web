@@ -195,6 +195,44 @@ export async function saveSubscriptionConfig(updateInterval: UpdateIntervalMode)
   )
 }
 
+export interface OutputSettings {
+  urlTestUrl: string
+  urlTestInterval: number
+  skipProxy: string
+  dnsServer: string
+}
+
+export type OutputSettingsInput = Partial<OutputSettings>
+
+export async function getOutputSettings(): Promise<OutputSettings> {
+  return handleResponse<OutputSettings>(await fetch(apiUrl('/api/output-settings')))
+}
+
+export async function saveOutputSettings(input: OutputSettingsInput): Promise<OutputSettings> {
+  return handleResponse<OutputSettings>(
+    await fetch(apiUrl('/api/output-settings'), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(input),
+    }),
+  )
+}
+
+export async function getOutputSettingsDefault(): Promise<OutputSettings> {
+  return handleResponse<OutputSettings>(
+    await fetch(apiUrl('/api/output-settings/default'), { headers: authHeaders() }),
+  )
+}
+
+export async function resetOutputSettings(): Promise<OutputSettings> {
+  return handleResponse<OutputSettings>(
+    await fetch(apiUrl('/api/output-settings/reset'), {
+      method: 'POST',
+      headers: authHeaders(),
+    }),
+  )
+}
+
 export async function previewSubscription(
   upstream: string,
   target: SubTarget = '',
