@@ -40,16 +40,16 @@ interface RuleEditorProps {
   rules: Rule[]
   onChange: (rules: Rule[]) => void
   rulesMerge: RulesMergeMode
-  onToggleUpstream: (show: boolean) => void
+  onToggleSubscriptionRules: (show: boolean) => void
 }
 
-export function RuleEditor({ rules, onChange, rulesMerge, onToggleUpstream }: RuleEditorProps) {
+export function RuleEditor({ rules, onChange, rulesMerge, onToggleSubscriptionRules }: RuleEditorProps) {
   const [dragList, setDragList] = useState<Rule[] | null>(null)
   const [draggedId, setDraggedId] = useState<string | null>(null)
-  const showUpstream = rulesMerge !== 'replace'
-  const upstreamHint =
+  const showSubscriptionRules = rulesMerge !== 'replace'
+  const subscriptionRulesHint =
     rulesMerge === 'append'
-      ? '已启用（订阅源优先）'
+      ? '已启用（订阅优先）'
       : rulesMerge === 'prepend'
         ? '已启用（自定义优先）'
         : '已禁用'
@@ -257,23 +257,23 @@ export function RuleEditor({ rules, onChange, rulesMerge, onToggleUpstream }: Ru
         )
       })}
 
-      {/* 订阅源规则占位块（固定底部） */}
+      {/* 订阅规则占位块（固定底部） */}
       <div
         className={`grid grid-cols-[32px_110px_1fr_160px_56px] gap-2 px-3 py-2.5 border-t items-center min-h-[52px] transition-colors ${
-          showUpstream ? 'bg-muted/40' : 'bg-muted/20 opacity-50'
+          showSubscriptionRules ? 'bg-muted/40' : 'bg-muted/20 opacity-50'
         }`}
       >
         <div></div>
-        <span className="text-xs font-medium text-muted-foreground">订阅源规则</span>
+        <span className="text-xs font-medium text-muted-foreground">订阅规则</span>
         <span className="text-xs text-muted-foreground italic">
-          {upstreamHint}
+          {subscriptionRulesHint}
         </span>
         <div></div>
         <div className="flex justify-center">
           <Switch
-            checked={showUpstream}
-            onCheckedChange={(checked) => onToggleUpstream(checked)}
-            title={showUpstream ? '禁用订阅源规则' : '启用订阅源规则'}
+            checked={showSubscriptionRules}
+            onCheckedChange={(checked) => onToggleSubscriptionRules(checked)}
+            title={showSubscriptionRules ? '禁用订阅规则' : '启用订阅规则'}
             className="mr-7"
           />
         </div>

@@ -168,7 +168,7 @@ export function SettingsPage({ theme, onThemeChange }: SettingsPageProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="auto">跟随订阅源</SelectItem>
+                <SelectItem value="auto">跟随订阅</SelectItem>
                 <SelectItem value="900">15 分钟</SelectItem>
                 <SelectItem value="1800">30 分钟</SelectItem>
                 <SelectItem value="3600">1 小时</SelectItem>

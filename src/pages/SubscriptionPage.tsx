@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Copy, Loader2, Play } from 'lucide-react'
 import { toast } from 'sonner'
-import { RecentUpstreamInput } from '@/components/RecentUpstreamInput'
+import { RecentSubscriptionInput } from '@/components/RecentSubscriptionInput'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,7 +20,7 @@ import {
   type SubPreviewResult,
   type SubTarget,
 } from '@/lib/api'
-import { pushRecentUpstream } from '@/lib/recent-upstream'
+import { pushRecentSubscription } from '@/lib/recent-subscription'
 
 const CLIENT_FORMAT_OPTIONS: { value: SubTarget; label: string; hint: string }[] = [
   {
@@ -36,23 +36,23 @@ const CLIENT_FORMAT_OPTIONS: { value: SubTarget; label: string; hint: string }[]
 ]
 
 export function SubscriptionPage() {
-  const [upstream, setUpstream] = useState('')
+  const [subscriptionUrl, setSubscriptionUrl] = useState('')
   const [target, setTarget] = useState<SubTarget>('')
   const [recentVersion, setRecentVersion] = useState(0)
   const [preview, setPreview] = useState<SubPreviewResult | null>(null)
   const [testing, setTesting] = useState(false)
 
   const subUrl = useMemo(
-    () => buildSubscriptionUrl({ upstream: upstream || undefined, target }),
-    [upstream, target],
+    () => buildSubscriptionUrl({ subscriptionUrl: subscriptionUrl || undefined, target }),
+    [subscriptionUrl, target],
   )
 
-  const canUse = upstream.trim().length > 0
+  const canUse = subscriptionUrl.trim().length > 0
   const selectedFormat =
     CLIENT_FORMAT_OPTIONS.find((opt) => opt.value === target) ?? CLIENT_FORMAT_OPTIONS[0]
 
   function rememberRecent(url: string) {
-    pushRecentUpstream(url)
+    pushRecentSubscription(url)
     setRecentVersion((v) => v + 1)
   }
 
@@ -64,17 +64,17 @@ export function SubscriptionPage() {
   async function handleCopy() {
     if (!canUse) return
     await copyText(subUrl, '订阅链接已复制')
-    rememberRecent(upstream)
+    rememberRecent(subscriptionUrl)
   }
 
   async function handleTest() {
     setTesting(true)
     setPreview(null)
     try {
-      const result = await previewSubscription(upstream, target)
+      const result = await previewSubscription(subscriptionUrl, target)
       setPreview(result)
       if (result.ok) {
-        rememberRecent(upstream)
+        rememberRecent(subscriptionUrl)
         toast.success('测试完成')
       } else {
         toast.error(result.error ?? '测试失败')
@@ -90,16 +90,16 @@ export function SubscriptionPage() {
         <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3">
           <CardTitle className="text-base">转换设置</CardTitle>
           <CardDescription className="text-xs">
-            填入机场订阅地址，生成可直接导入 Clash、Surge、Loon 等客户端的订阅链接
+            填入订阅链接，生成可直接导入 Clash、Surge、Loon 等客户端的转换订阅
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 p-4 pt-0 sm:p-5 sm:pt-0">
           <div className="space-y-2">
-            <Label htmlFor="upstream">机场订阅链接</Label>
-            <RecentUpstreamInput
-              id="upstream"
-              value={upstream}
-              onChange={setUpstream}
+            <Label htmlFor="subscription-url">订阅链接</Label>
+            <RecentSubscriptionInput
+              id="subscription-url"
+              value={subscriptionUrl}
+              onChange={setSubscriptionUrl}
               recentVersion={recentVersion}
               placeholder="https://example.com/sub?token=..."
             />
@@ -217,7 +217,7 @@ export function SubscriptionPage() {
             <li>
               输出 Clash 格式时会合并 <code className="text-xs">data/rules.yaml</code>；可在「规则」页配置与订阅自带内容的合并方式。
             </li>
-            <li>在浏览器直接打开链接会请求机场原始地址，不经过转换；请通过客户端更新订阅或使用「测试拉取」验证。</li>
+            <li>在浏览器直接打开原始订阅链接会跳过转换；请通过客户端更新订阅或使用「测试拉取」验证。</li>
           </ul>
         </CardContent>
       </Card>

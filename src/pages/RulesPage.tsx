@@ -275,7 +275,7 @@ export function RulesPage() {
             rules={rules}
             onChange={setRules}
             rulesMerge={rulesMerge}
-            onToggleUpstream={(checked) =>
+            onToggleSubscriptionRules={(checked) =>
               setRulesMerge((current) => {
                 if (!checked) return 'replace'
                 return current === 'replace' ? 'prepend' : current

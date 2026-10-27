@@ -3,12 +3,12 @@ import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
-  clearRecentUpstream,
-  loadRecentUpstream,
-  removeRecentUpstream,
-} from '@/lib/recent-upstream'
+  clearRecentSubscriptions,
+  loadRecentSubscriptions,
+  removeRecentSubscription,
+} from '@/lib/recent-subscription'
 
-interface RecentUpstreamInputProps {
+interface RecentSubscriptionInputProps {
   id?: string
   value: string
   onChange: (value: string) => void
@@ -17,19 +17,19 @@ interface RecentUpstreamInputProps {
   recentVersion?: number
 }
 
-export function RecentUpstreamInput({
+export function RecentSubscriptionInput({
   id,
   value,
   onChange,
   placeholder,
   recentVersion = 0,
-}: RecentUpstreamInputProps) {
+}: RecentSubscriptionInputProps) {
   const [open, setOpen] = useState(false)
-  const [recent, setRecent] = useState<string[]>(() => loadRecentUpstream())
+  const [recent, setRecent] = useState<string[]>(() => loadRecentSubscriptions())
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setRecent(loadRecentUpstream())
+    setRecent(loadRecentSubscriptions())
   }, [recentVersion])
 
   useEffect(() => {
@@ -59,11 +59,11 @@ export function RecentUpstreamInput({
   function remove(url: string, event: MouseEvent) {
     event.preventDefault()
     event.stopPropagation()
-    setRecent(removeRecentUpstream(url))
+    setRecent(removeRecentSubscription(url))
   }
 
   function clearAll() {
-    setRecent(clearRecentUpstream())
+    setRecent(clearRecentSubscriptions())
     setOpen(false)
   }
 

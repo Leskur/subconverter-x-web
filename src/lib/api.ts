@@ -4,14 +4,15 @@ import { getApiBase, getActiveToken } from './backends'
 export type SubTarget = '' | 'clash' | 'surge' | 'surfboard' | 'loon' | 'quanx'
 
 export interface SubscriptionUrlOptions {
-  upstream?: string
+  /** 待转换的订阅链接 */
+  subscriptionUrl?: string
   target?: SubTarget
 }
 
-const EXAMPLE_UPSTREAM = 'https://example.com/sub'
+const EXAMPLE_SUBSCRIPTION_URL = 'https://example.com/sub'
 
 /** 规范为原始 http(s) URL，避免重复编码 */
-export function normalizeUpstreamUrl(url: string): string {
+export function normalizeSubscriptionUrl(url: string): string {
   const trimmed = url.trim()
   if (!trimmed) return ''
 
@@ -29,15 +30,15 @@ export function normalizeUpstreamUrl(url: string): string {
 
 export function buildSubscriptionUrl(options: SubscriptionUrlOptions = {}): string {
   const base = getPublicApiUrl()
-  const upstream = options.upstream?.trim()
+  const subscriptionUrl = options.subscriptionUrl?.trim()
 
-  if (!upstream) {
+  if (!subscriptionUrl) {
     const targetPart = options.target ? `&target=${encodeURIComponent(options.target)}` : ''
     return `${base}/sub?url=<订阅链接>${targetPart}`
   }
 
   const params = new URLSearchParams()
-  params.set('url', normalizeUpstreamUrl(upstream))
+  params.set('url', normalizeSubscriptionUrl(subscriptionUrl))
   if (options.target) {
     params.set('target', options.target)
   }
@@ -46,7 +47,7 @@ export function buildSubscriptionUrl(options: SubscriptionUrlOptions = {}): stri
 }
 
 export function buildExampleSubscriptionUrl(): string {
-  return buildSubscriptionUrl({ upstream: EXAMPLE_UPSTREAM })
+  return buildSubscriptionUrl({ subscriptionUrl: EXAMPLE_SUBSCRIPTION_URL })
 }
 
 export type RulesMergeMode = 'replace' | 'prepend' | 'append'
@@ -234,16 +235,16 @@ export async function resetOutputSettings(): Promise<OutputSettings> {
 }
 
 export async function previewSubscription(
-  upstream: string,
+  subscriptionUrl: string,
   target: SubTarget = '',
 ): Promise<SubPreviewResult> {
-  if (!upstream.trim()) {
-    return { ok: false, error: '请填写机场订阅链接' }
+  if (!subscriptionUrl.trim()) {
+    return { ok: false, error: '请填写订阅链接' }
   }
 
-  const url = buildSubscriptionUrl({ upstream, target })
+  const url = buildSubscriptionUrl({ subscriptionUrl, target })
   if (url.includes('<订阅链接>')) {
-    return { ok: false, error: '请填写机场订阅链接' }
+    return { ok: false, error: '请填写订阅链接' }
   }
 
   try {
