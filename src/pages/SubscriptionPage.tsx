@@ -38,13 +38,14 @@ const CLIENT_FORMAT_OPTIONS: { value: SubTarget; label: string; hint: string }[]
 export function SubscriptionPage() {
   const [subscriptionUrl, setSubscriptionUrl] = useState('')
   const [target, setTarget] = useState<SubTarget>('')
+  const [ua, setUa] = useState('')
   const [recentVersion, setRecentVersion] = useState(0)
   const [preview, setPreview] = useState<SubPreviewResult | null>(null)
   const [testing, setTesting] = useState(false)
 
   const subUrl = useMemo(
-    () => buildSubscriptionUrl({ subscriptionUrl: subscriptionUrl || undefined, target }),
-    [subscriptionUrl, target],
+    () => buildSubscriptionUrl({ subscriptionUrl: subscriptionUrl || undefined, target, ua }),
+    [subscriptionUrl, target, ua],
   )
 
   const canUse = subscriptionUrl.trim().length > 0
@@ -71,7 +72,7 @@ export function SubscriptionPage() {
     setTesting(true)
     setPreview(null)
     try {
-      const result = await previewSubscription(subscriptionUrl, target)
+      const result = await previewSubscription(subscriptionUrl, target, ua)
       setPreview(result)
       if (result.ok) {
         rememberRecent(subscriptionUrl)
@@ -126,6 +127,20 @@ export function SubscriptionPage() {
               </SelectContent>
             </Select>
             <p className="text-xs leading-relaxed text-muted-foreground">{selectedFormat.hint}</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="fetch-ua">拉取 UA（可选）</Label>
+            <Input
+              id="fetch-ua"
+              value={ua}
+              onChange={(e) => setUa(e.target.value)}
+              placeholder="例如 clash-verge/v2.5.1"
+              className="font-mono text-xs"
+            />
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              写入查询参数 ua，指定拉取订阅源时使用的 User-Agent；部分机场按 UA 返回不同内容
+            </p>
           </div>
         </CardContent>
       </Card>

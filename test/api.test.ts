@@ -33,4 +33,16 @@ describe('buildSubscriptionUrl', () => {
       'https://api.example.com/sub?url=https%3A%2F%2Fa.example.com%2Fsub%3Fid%3D1%26x%3D2&target=surge',
     )
   })
+
+  it('includes ua when provided', () => {
+    expect(
+      buildSubscriptionUrl({
+        subscriptionUrl: 'https://a.example.com/sub',
+        target: 'clash',
+        ua: 'clash-verge/v2.5.1',
+      }),
+    ).toBe(
+      'https://api.example.com/sub?url=https%3A%2F%2Fa.example.com%2Fsub&target=clash&ua=clash-verge%2Fv2.5.1',
+    )
+  })
 })

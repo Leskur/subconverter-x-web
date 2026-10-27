@@ -7,6 +7,8 @@ export interface SubscriptionUrlOptions {
   /** 待转换的订阅链接 */
   subscriptionUrl?: string
   target?: SubTarget
+  /** 拉取订阅链接时使用的 User-Agent */
+  ua?: string
 }
 
 const EXAMPLE_SUBSCRIPTION_URL = 'https://example.com/sub'
@@ -31,16 +33,21 @@ export function normalizeSubscriptionUrl(url: string): string {
 export function buildSubscriptionUrl(options: SubscriptionUrlOptions = {}): string {
   const base = getPublicApiUrl()
   const subscriptionUrl = options.subscriptionUrl?.trim()
+  const ua = options.ua?.trim()
 
   if (!subscriptionUrl) {
     const targetPart = options.target ? `&target=${encodeURIComponent(options.target)}` : ''
-    return `${base}/sub?url=<订阅链接>${targetPart}`
+    const uaPart = ua ? `&ua=${encodeURIComponent(ua)}` : ''
+    return `${base}/sub?url=<订阅链接>${targetPart}${uaPart}`
   }
 
   const params = new URLSearchParams()
   params.set('url', normalizeSubscriptionUrl(subscriptionUrl))
   if (options.target) {
     params.set('target', options.target)
+  }
+  if (ua) {
+    params.set('ua', ua)
   }
 
   return `${base}/sub?${params.toString()}`
@@ -237,12 +244,13 @@ export async function resetOutputSettings(): Promise<OutputSettings> {
 export async function previewSubscription(
   subscriptionUrl: string,
   target: SubTarget = '',
+  ua = '',
 ): Promise<SubPreviewResult> {
   if (!subscriptionUrl.trim()) {
     return { ok: false, error: '请填写订阅链接' }
   }
 
-  const url = buildSubscriptionUrl({ subscriptionUrl, target })
+  const url = buildSubscriptionUrl({ subscriptionUrl, target, ua })
   if (url.includes('<订阅链接>')) {
     return { ok: false, error: '请填写订阅链接' }
   }
